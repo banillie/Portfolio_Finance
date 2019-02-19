@@ -36,9 +36,9 @@ all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
 '''function that makes list of tuples containing financial key:valueinfo for each project. cells_to_capture lists 
 of interest are stored below'''
-def financial_info(dictionary, cells_to_capture):
+def financial_info(list_names, dictionary, cells_to_capture):
     output_dicitonary = {}
-    for name in dictionary.keys():
+    for name in list_names:
         output_list = []
         for item in dictionary[name]:
             if item in cells_to_capture:
@@ -58,13 +58,14 @@ def financial_info(dictionary, cells_to_capture):
     return output_dicitonary
 
 '''function that calculates year totals. Returns a list'''
-def year_totals(cells_to_capture, fin_dictionary):
+def year_totals(list_names, cells_to_capture, fin_dictionary):
     totals = []
     for i in range(0, len(cells_to_capture)):
         key = cells_to_capture[i]
         thesum = 0
-        for name in fin_dictionary:
+        for name in list_names:
             if name in remove_from_totals:
+                print(name)
                 pass
             else:
                 try:
@@ -198,17 +199,29 @@ def place_in_excel(fin_dictionary, total, cells_to_capture):
     return wb
 
 
-latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_3_2018.xlsx")
-last_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
+latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
+#last_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
+
+'''filtering names'''
+#proj_names = list(latest_q.key())
+proj_names = ['Digital Railway', 'East Coast Mainline Programme',
+              'Great Western Route Modernisation (GWRM) including electrification',
+              'Intercity Express Programme', 'Midland Main Line Programme', 'Mobile Connectivity on Rail Project',
+              'North of England Programme', 'South West Route Capacity', 'Thameslink Programme',
+              'Western Rail Link to Heathrow']
+
+# taken out 'East Coast Digital Programme'
 
 remove_from_totals = ['HS2 Phase 2b', 'HS2 Phase1', 'HS2 Phase2a', 'East Midlands Franchise',
-                    'South Eastern Rail Franchise Competition', 'West Coast Partnership Franchise',
-                     'A66 Full Scheme', 'East Coast Digital Programme',
-                      'Manchester North West Quadrant']
+                      'South Eastern Rail Franchise Competition', 'West Coast Partnership Franchise',
+                      'A66 Full Scheme', 'East Coast Digital Programme',
+                      'Manchester North West Quadrant', 'Commercial Vehicle Services (CVS)',
+                      'East West Rail Programme (Central Section)', 'Future Theory Test Service (FTTS)',
+                      'Oxford-Cambridge Expressway']
 
-finance_data = financial_info(latest_q, all_data_lists)
-total_data = year_totals(all_data_lists, latest_q)
+finance_data = financial_info(proj_names, latest_q, all_data_lists)
+total_data = year_totals(proj_names, all_data_lists, latest_q)
 
 output = place_in_excel(finance_data, total_data, all_data_lists)
 
-output.save("C:\\Users\\Standalone\\Will\\Q3_1819_p_fin_profile_like_for_like.xlsx")
+output.save("C:\\Users\\Standalone\\Will\\Q2_major_nr_portfolio_profile.xlsx")

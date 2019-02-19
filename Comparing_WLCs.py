@@ -1,8 +1,12 @@
-''' This programme for compare projects wlc values between quarters. It can be used to compare a specific quarter
- or total wlc information. It produces a wb output with data and calculations only i.e. no graph
+'''
+Programme to compare projects wlc values.
+
+It can be used to compare a specific year or total wlc information. It produces a wb output with data and calculations
+only i.e. no graph.
 
 Changes to wlc in relation 1) overall figures, 2) change between quarters, 3) percent change are highlighted
-in red if change is greater/less than £100m/-£100m or percentage change greater/less than 5%/-5% of project value'''
+in red if change is greater/less than £100m/-£100m or percentage change greater/less than 5%/-5% of project value
+'''
 
 
 from bcompiler.utils import project_data_from_master
@@ -53,7 +57,7 @@ def compare(data_1, data_2):
     ws.cell(row=1, column=2).value = 'Latest Quarter'
     ws.cell(row=1, column=3).value = 'Last Quarter'
     ws.cell(row=1, column=4).value = 'Change'
-    ws.cell(row=1, column=3).value = 'Percentage Change'
+    ws.cell(row=1, column=5).value = 'Percentage Change'
     return wb
 
 def get_yearly_costs(data, cost_list, year, remove):
@@ -95,16 +99,16 @@ remove_projects = ['West Coast Partnership Franchise', 'South Eastern Rail Franc
                    'HS2 Phase1', 'HS2 Phase2a']
 
 '''for yearly information'''
-cost_list = [' RDEL Forecast Total', ' CDEL Forecast Total', ' Forecast Non-Gov']
-year_interest = '23-24'
-one = get_yearly_costs(latest_q, cost_list, year_interest, remove_projects)
-two = get_yearly_costs(last_q, cost_list, year_interest, remove_projects)
+#cost_list = [' RDEL Forecast Total', ' CDEL Forecast Total', ' Forecast Non-Gov']
+#year_interest = '23-24'
+#one = get_yearly_costs(latest_q, cost_list, year_interest, remove_projects)
+#two = get_yearly_costs(last_q, cost_list, year_interest, remove_projects)
 
 '''for wlc'''
 wlc_key = 'Total Forecast'
-#one = get_wlc(latest_q, wlc_key)
-#two = get_wlc(last_q, wlc_key)
+one = get_wlc(latest_q, wlc_key)
+two = get_wlc(last_q, wlc_key)
 
 output = compare(one, two)
 
-output.save("C:\\Users\\Standalone\\Will\\Q3_18_19_fins_23_24.xlsx")
+output.save("C:\\Users\\Standalone\\Will\\output.xlsx")
