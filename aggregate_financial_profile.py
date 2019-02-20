@@ -26,20 +26,23 @@ def financial_info(list_names, master_data, cells_to_capture):
     output_dicitonary = {}
     for name in list_names:
         output_list = []
-        for item in master_data[name]:
-            if item in cells_to_capture:
-                if master_data[name][item] is None:
-                    key = item
-                    value = 0
-                    tuple = (key, value)
-                    output_list.append(tuple)
-                else:
-                    key = item
-                    value = master_data[name][item]
-                    tuple = (key, value)
-                    output_list.append(tuple)
+        try:
+            for item in master_data[name]:
+                if item in cells_to_capture:
+                    if master_data[name][item] is None:
+                        key = item
+                        value = 0
+                        tuple = (key, value)
+                        output_list.append(tuple)
+                    else:
+                        key = item
+                        value = master_data[name][item]
+                        tuple = (key, value)
+                        output_list.append(tuple)
 
-        output_dicitonary[name] = output_list
+            output_dicitonary[name] = output_list
+        except KeyError:
+            pass
 
     return output_dicitonary
 
@@ -237,11 +240,11 @@ capture_income =['18-19 Forecast - Income both Revenue and Capital', '19-20 Fore
 
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
-'''master data to be used for analysis'''
+''' ONE: master data to be used for analysis'''
 
 latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
 
-'''project name list options - this is where the group of interest is specified '''
+''' TWO: project name list options - this is where the group of interest is specified '''
 
 '''option 1 - all '''
 proj_names_all = list(latest_q.keys())
@@ -250,7 +253,7 @@ proj_names_all = list(latest_q.keys())
 #TODO write function for filtering list of project names based on group
 #proj_names_group
 
-'''option 2 - bespoke list of projects'''
+'''option 3 - bespoke list of projects'''
 #proj_names_bespoke = ['Digital Railway', 'East Coast Mainline Programme',
 #              'Great Western Route Modernisation (GWRM) including electrification',
 #              'Intercity Express Programme', 'Midland Main Line Programme', 'Mobile Connectivity on Rail Project',
@@ -268,7 +271,7 @@ remove_from_totals = ['HS2 Phase 2b', 'HS2 Phase1', 'HS2 Phase2a', 'East Midland
 
 # TODO add an easy option here for comparing like for like
 
-'''running the programme'''
+'''THREE: enter variables created via options above into functions and run programme'''
 
 finance_data = financial_info(proj_names_all, latest_q, all_data_lists)
 total_data = year_totals(proj_names_all, all_data_lists, latest_q)
