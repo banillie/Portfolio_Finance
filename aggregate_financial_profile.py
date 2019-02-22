@@ -78,6 +78,21 @@ def year_totals(list_names, cells_to_capture, fin_data):
     return totals_list
 
 
+def likeforlike(data_1, data_2):
+    '''
+    small programme used to filter out projects that are not in both data sets
+    :param data_1: most recent quarters data
+    :param data_2: less recent quarters data
+    :return: a list of projects that are in both data sets
+    '''
+
+    one = list(set(data_1) - set(data_2))
+    two = list(set(data_2) - set(data_1))
+
+    output_list = one + two
+
+    return output_list
+
 def place_in_excel(fin_data, totals, cells_to_capture):
     '''
     function places all data into a new workbook.
@@ -243,7 +258,8 @@ all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
 ''' ONE: master data to be used for analysis'''
 
-latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
+latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_3_2018.xlsx")
+other_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
 
 ''' TWO: project name list options - this is where the group of interest is specified '''
 
@@ -255,24 +271,17 @@ proj_names_all = list(latest_q.keys())
 #proj_names_group
 
 '''option 3 - bespoke list of projects'''
-#proj_names_bespoke = ['Digital Railway', 'East Coast Mainline Programme',
-#              'Great Western Route Modernisation (GWRM) including electrification',
-#              'Intercity Express Programme', 'Midland Main Line Programme', 'Mobile Connectivity on Rail Project',
-#              'North of England Programme', 'South West Route Capacity', 'Thameslink Programme',
-#              'Western Rail Link to Heathrow']
+#proj_names_bespoke = ['Digital Railway']
 
-'''project names to be removed from totals'''
+'''THREE: project names to be removed from total figures - chose as necessary'''
+dont_double_count = ['HS2 Phase 2b', 'HS2 Phase1', 'HS2 Phase2a', 'East Midlands Franchise',
+                      'South Eastern Rail Franchise Competition', 'West Coast Partnership Franchise']
 
-remove_from_totals = ['HS2 Phase 2b', 'HS2 Phase1', 'HS2 Phase2a', 'East Midlands Franchise',
-                      'South Eastern Rail Franchise Competition', 'West Coast Partnership Franchise',
-                      'A66 Full Scheme', 'East Coast Digital Programme',
-                      'Manchester North West Quadrant', 'Commercial Vehicle Services (CVS)',
-                      'East West Rail Programme (Central Section)', 'Future Theory Test Service (FTTS)',
-                      'Oxford-Cambridge Expressway']
+like_for_like = likeforlike(latest_q, other_q_data)
 
-# TODO add an easy option here for comparing like for like
+remove_from_totals = dont_double_count + like_for_like
 
-'''THREE: enter variables created via options above into functions and run programme'''
+'''Four: enter variables created via options above into functions and run programme'''
 
 finance_data = financial_info(proj_names_all, latest_q, all_data_lists)
 total_data = year_totals(proj_names_all, all_data_lists, latest_q)
