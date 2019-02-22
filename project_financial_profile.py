@@ -12,130 +12,167 @@ from bcompiler.utils import project_data_from_master
 from openpyxl.chart import LineChart, Reference
 from openpyxl.chart.text import RichText
 from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
-from aggregate_financial_profile import financial_info
+#from aggregate_financial_profile import financial_info
 
 # TODO change/tweak how it is designed so can use functions from aggregate_financial_profile
 
+def financial_dict(name_list, master_data, cells_to_capture):
+    '''
+    the creation of a mini dictionary containing financial information. This is done via two functions; this one
+    and the one title financial_info ( directly below ).
+    :param name_list: list of project names
+    :param master_data: master data for quarter of interest
+    :param cells_to_capture: financial info key names. see lists below
+    :return:
+    '''
 
-def place_in_excel(list_names, cells_to_capture, latest_fin_data, last_fin_data, baseline_fin_data):
-    wb = Workbook()
-    ws = wb.active
-    row_start = 3
+    output_dict = {}
+    for name in name_list:
+        get_dict_info = financial_info(name, master_data, cells_to_capture)
+        output_dict[name] = get_dict_info
 
+    return output_dict
+
+
+def financial_info(name, master_data, cells_to_capture):
+    '''
+    function that creates dictionary containing financial {key : value} information.
+    names = name of project
+    master_data = master data set
+    cells_to_capture = lists of keys of interest
+    '''
+
+    output_dict = {}
+
+    if name in master_data.keys():
+        for item in master_data[name]:
+            if item in cells_to_capture:
+                if master_data[name][item] is None:
+                    output_dict[item] = 0
+                else:
+                    value = master_data[name][item]
+                    output_dict[item] = value
+
+    else:
+        for item in cells_to_capture:
+            output_dict[item] = 0
+
+    return output_dict
+
+def calculate_totals(name, fin_data):
+    '''
+    :param name: project name
+    :param fin_data: mini project financial dictionary
+    :return: a total number for rdel, cdel, and ng spend each financial year
+    '''
+
+    working_data = fin_data[name]
+    rdel_list = []
+    cdel_list = []
+    ng_list = []
+
+    for rdel in capture_rdel:
+        rdel_list.append(working_data[rdel])
+    for cdel in capture_cdel:
+        cdel_list.append(working_data[cdel])
+    for ng in capture_ng:
+        ng_list.append(working_data[ng])
+
+    total_list = []
+    for i in range(len(rdel_list)):
+        total = rdel_list[i] + cdel_list[i] + ng_list[i]
+        total_list.append(total)
+
+    return total_list
+
+def calculate_income_totals(name, fin_data):
+    '''
+    :param name: project name
+    :param fin_data: mini project financial dictionary
+    :return: a total number for income spending each financial year
+    '''
+
+    working_data = fin_data[name]
+    income_list = []
+
+    for income in capture_income:
+        income_list.append(working_data[income])
+
+    return income_list
+
+def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
     '''
     function places all data into excel spreadsheet and creates chart.
-    data is placed into sheet in reverse order so that most recent
+    data is placed into sheet in reverse order (see how data_list is ordered) so that most recent
     data is displayed on right hand side of the data table
     '''
 
-    for name in list_names:
-        for key in cells_to_capture:
-            ws.cell(row=row_start, column=11, value=latest_financial_data[name][key])
-            ws.cell(row=row_start, column=12, value=two[x][1])
-            ws.cell(row=row_start, column=13, value=three[x][1])
-            ws.cell(row=row_start, column=14, value=(one[x][1] + two[x][1] + three[x][1]))
-        try:
-            ws.cell(row=row_start, column=7, value=four[x][1])
-        except IndexError:
-            ws.cell(row=row_start, column=7, value=0)
-        try:
-            ws.cell(row=row_start, column=8, value=five[x][1])
-        except IndexError:
-            ws.cell(row=row_start, column=8, value=0)
-        try:
-            ws.cell(row=row_start, column=9, value=six[x][1])
-        except IndexError:
-            ws.cell(row=row_start, column=9, value=0)
-        try:
-            ws.cell(row=row_start, column=10, value=(four[x][1] + five[x][1] + six[x][1]))
-        except IndexError:
-            ws.cell(row=row_start, column=10, value=0)
-        try:
-            ws.cell(row=row_start, column=3, value=seven[x][1])
-        except IndexError:
-            ws.cell(row=row_start, column=3, value=0)
-        try:
-            ws.cell(row=row_start, column=4, value=eight[x][1])
-        except IndexError:
-            ws.cell(row=row_start, column=4, value=0)
-        try:
-            ws.cell(row=row_start, column=5, value=nine[x][1])
-        except IndexError:
-            ws.cell(row=row_start, column=5, value=0)
-        try:
-            ws.cell(row=row_start, column=6, value=(seven[x][1] + eight[x][1] + nine[x][1]))
-        except IndexError:
-            ws.cell(row=row_start, column=6, value=0)
-        row_start += 1
+    wb = Workbook()
+    ws = wb.active
+    data_list = [baseline_fin_data, last_fin_data, latest_fin_data]
+    count = 0
 
-    ws.cell(row=2, column=3, value='RDEL')
-    ws.cell(row=2, column=4, value='CDEL')
-    ws.cell(row=2, column=5, value='Non-Gov')
-    ws.cell(row=2, column=6, value='Profile - one year ago')
-    ws.cell(row=2, column=7, value='RDEL')
-    ws.cell(row=2, column=8, value='CDEL')
-    ws.cell(row=2, column=9, value='Non-Gov')
-    ws.cell(row=2, column=10, value='Profile - last quarter')
-    ws.cell(row=2, column=11, value='RDEL')
-    ws.cell(row=2, column=12, value='CDEL')
-    ws.cell(row=2, column=13, value='Non-Gov')
-    ws.cell(row=2, column=14, value='Profile - current')
+    '''places in raw/reported data'''
+    for data in data_list:
+        for i, key in enumerate(capture_rdel):
+            ws.cell(row=i+3, column=2+count, value=data[name][key])
+        for i, key in enumerate(capture_cdel):
+            ws.cell(row=i+3, column=3+count, value=data[name][key])
+        for i, key in enumerate(capture_ng):
+            ws.cell(row=i+3, column=4+count, value=data[name][key])
+        count += 4
 
-    ws.cell(row=2, column=2, value='Spend')
-    # ws.cell(row=3, column=2, value='17/18')
-    ws.cell(row=3, column=2, value='18/19')
-    ws.cell(row=4, column=2, value='19/20')
-    ws.cell(row=5, column=2, value='20/21')
-    ws.cell(row=6, column=2, value='21/22')
-    ws.cell(row=7, column=2, value='22/23')
-    ws.cell(row=8, column=2, value='23/24')
-    ws.cell(row=9, column=2, value='24/25')
-    ws.cell(row=10, column=2, value='25/26')
-    ws.cell(row=11, column=2, value='26/27')
-    ws.cell(row=12, column=2, value='27/28')
-    ws.cell(row=13, column=2, value='Unprofiled')
+    '''places in totals'''
+    baseline_totals = calculate_totals(name, baseline_fin_data)
+    last_q_totals = calculate_totals(name, last_fin_data)
+    latest_q_totals = calculate_totals(name, latest_fin_data)
 
-    ws.cell(row=1, column=3, value='One year ago')
-    ws.cell(row=1, column=7, value='Laster quarter')
-    ws.cell(row=1, column=11, value='Current quarter')
+    total_list = [baseline_totals, last_q_totals, latest_q_totals]
 
-    ws.merge_cells(start_row=1, start_column=3, end_row=1, end_column=6)
-    ws.merge_cells(start_row=1, start_column=7, end_row=1, end_column=10)
-    ws.merge_cells(start_row=1, start_column=11, end_row=1, end_column=14)
+    c = 0
+    for l in total_list:
+        for i, total in enumerate(l):
+            ws.cell(row=i+3, column=5+c, value=total)
+        c += 4
 
-    '''process for showing total cost profile - and then graph created'''
+    '''labeling data in table'''
+
+    labeling_list_quarter = ['Baseline', 'Last Quarter', 'Latest quarter']
+
+    ws.cell(row=1, column=2, value=labeling_list_quarter[0])
+    ws.cell(row=1, column=6, value=labeling_list_quarter[1])
+    ws.cell(row=1, column=10, value=labeling_list_quarter[2])
+
+    labeling_list_type = ['RDEL', 'CDEL', 'Non-Gov', 'Total']
+    repeat = 3
+    c = 0
+    while repeat > 0:
+        for i, label in enumerate(labeling_list_type):
+            ws.cell(row=2, column=2+i+c, value=label)
+        c += 4
+        repeat -= 1
+
+    labeling_list_year = ['Spend', '18/19', '19/20', '20/21', '21/22', '22/23', '23/24', '24/25', '25/26', '26/27',
+                          '27/28', 'Unprofiled']
+
+    for i, label in enumerate(labeling_list_year):
+        ws.cell(row=2+i, column=1, value=label)
+
+    '''process for showing total cost profile. starting with data'''
 
     row_start = 16
+    for x, l in enumerate(total_list):
+        for i, total in enumerate(l):
+            ws.cell(row=i + row_start, column=x + 2, value=total)
 
-    for x in range(0, len(one)):
-        ws.cell(row=row_start, column=5, value=(one[x][1] + two[x][1] + three[x][1]))
-        try:
-            ws.cell(row=row_start, column=4, value=(four[x][1] + five[x][1] + six[x][1]))
-        except IndexError:
-            ws.cell(row=row_start, column=4, value=0)
-        try:
-            ws.cell(row=row_start, column=3, value=(seven[x][1] + eight[x][1] + nine[x][1]))
-        except IndexError:
-            ws.cell(row=row_start, column=3, value=0)
-        row_start += 1
+    '''data for graph labeling'''
 
-    ws.cell(row=15, column=3, value='One year ago')
-    ws.cell(row=15, column=4, value='Last quarter')
-    ws.cell(row=15, column=5, value='Latest')
+    for i, quarter in enumerate(labeling_list_quarter):
+        ws.cell(row=15, column=i + 2, value=quarter)
 
-    ws.cell(row=15, column=2, value='Spend')
-    # ws.cell(row=3, column=2, value='17/18')
-    ws.cell(row=16, column=2, value='18/19')
-    ws.cell(row=17, column=2, value='19/20')
-    ws.cell(row=18, column=2, value='20/21')
-    ws.cell(row=19, column=2, value='21/22')
-    ws.cell(row=20, column=2, value='22/23')
-    ws.cell(row=21, column=2, value='23/24')
-    ws.cell(row=22, column=2, value='24/25')
-    ws.cell(row=23, column=2, value='25/26')
-    ws.cell(row=24, column=2, value='26/27')
-    ws.cell(row=25, column=2, value='27/28')
-    ws.cell(row=26, column=2, value='Unprofiled')
+    for i, label in enumerate(labeling_list_year):
+        ws.cell(row=15+i, column=1, value=label)
+
 
     chart = LineChart()
     chart.title = str(name) + ' Cost Profile'
@@ -162,9 +199,9 @@ def place_in_excel(list_names, cells_to_capture, latest_fin_data, last_fin_data,
     chart.title.tx.rich.p[0].pPr = pp_2
 
     '''unprofiled costs not included in the chart'''
-    data = Reference(ws, min_col=3, min_row=15, max_col=5, max_row=25)
+    data = Reference(ws, min_col=2, min_row=15, max_col=4, max_row=25)
     chart.add_data(data, titles_from_data=True)
-    cats = Reference(ws, min_col=2, min_row=16, max_row=25)
+    cats = Reference(ws, min_col=1, min_row=16, max_row=25)
     chart.set_categories(cats)
 
     s3 = chart.series[0]
@@ -178,44 +215,27 @@ def place_in_excel(list_names, cells_to_capture, latest_fin_data, last_fin_data,
 
     '''process for creating income chart'''
 
-    '''If statement used to create income charts for only those projects
-    reporting income'''
-    tally = []
-    for i in range(0, len(income_one)):
-        tally.append(income_one[i][1])
+    baseline_total_income = calculate_income_totals(name, baseline_fin_data)
+    last_q_total_income = calculate_income_totals(name, last_fin_data)
+    latest_q_total_income = calculate_income_totals(name, latest_fin_data)
 
-    row_start = 32
+    total_income_list = [baseline_total_income, last_q_total_income, latest_q_total_income]
 
-    if sum(tally) != 0:
-        for x in range(0, len(one)):
-            ws.cell(row=row_start, column=5, value=(income_one[x][1]))
-            try:
-                ws.cell(row=row_start, column=4, value=(income_two[x][1]))
-            except IndexError:
-                ws.cell(row=row_start, column=4, value=0)
-            try:
-                ws.cell(row=row_start, column=3, value=(income_three[x][1]))
-            except IndexError:
-                ws.cell(row=row_start, column=3, value=0)
-            row_start += 1
+    if sum(latest_q_total_income) is not 0:
+        for x, l in enumerate(total_income_list):
+            for i, total in enumerate(l):
+                ws.cell(row=i + 32, column=x + 2, value=total)
 
-        ws.cell(row=31, column=3, value='One year ago')
-        ws.cell(row=31, column=4, value='Last quarter')
-        ws.cell(row=31, column=5, value='Current')
+        '''data for graph labeling'''
 
-        ws.cell(row=31, column=2, value='Spend')
-        # ws.cell(row=3, column=2, value='17/18')
-        ws.cell(row=32, column=2, value='18/19')
-        ws.cell(row=33, column=2, value='19/20')
-        ws.cell(row=34, column=2, value='20/21')
-        ws.cell(row=35, column=2, value='21/22')
-        ws.cell(row=36, column=2, value='22/23')
-        ws.cell(row=37, column=2, value='23/24')
-        ws.cell(row=38, column=2, value='24/25')
-        ws.cell(row=39, column=2, value='25/26')
-        ws.cell(row=40, column=2, value='26/27')
-        ws.cell(row=41, column=2, value='27/28')
-        ws.cell(row=42, column=2, value='Unprofiled')
+        for i, quarter in enumerate(labeling_list_quarter):
+            ws.cell(row=32, column=i + 2, value=quarter)
+
+        for i, label in enumerate(labeling_list_year):
+            ws.cell(row=32 + i, column=1, value=label)
+
+
+        '''income graph'''
 
         chart = LineChart()
         chart.title = str(name) + ' Income Profile'
@@ -223,8 +243,6 @@ def place_in_excel(list_names, cells_to_capture, latest_fin_data, last_fin_data,
         chart.x_axis.title = 'Financial Year'
         chart.y_axis.title = 'Cost £m'
 
-        '''styling chart'''
-        # axis titles
         font = Font(typeface='Calibri')
         size = 1200  # 12 point size
         cp = CharacterProperties(latin=font, sz=size, b=True)  # Bold
@@ -241,12 +259,13 @@ def place_in_excel(list_names, cells_to_capture, latest_fin_data, last_fin_data,
         rtp_2 = RichText(p=[Paragraph(pPr=pp_2, endParaRPr=cp_2)])
         chart.title.tx.rich.p[0].pPr = pp_2
 
-        '''unprofiled costs not included in the chart'''
-        data = Reference(ws, min_col=3, min_row=31, max_col=5, max_row=41)
+        #unprofiled costs not included in the chart
+        data = Reference(ws, min_col=2, min_row=32, max_col=4, max_row=42)
         chart.add_data(data, titles_from_data=True)
-        cats = Reference(ws, min_col=2, min_row=32, max_row=41)
+        cats = Reference(ws, min_col=1, min_row=33, max_row=42)
         chart.set_categories(cats)
 
+        
         '''
         keeping as colour coding is useful
         s1 = chart.series[0]
@@ -317,15 +336,12 @@ capture_income =['18-19 Forecast - Income both Revenue and Capital', '19-20 Fore
                 '26-27 Forecast - Income both Revenue and Capital', '27-28 Forecast - Income both Revenue and Capital',
                 'Unprofiled Forecast Income']
 
+
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
-# financial_year = ['17-18 Forecast Non-Gov', '17-18 CDEL Forecast Total', '17-18 RDEL Forecast Total']
 
 # TODO add income
 
-#real_or_nominal = 'Real or Nominal - Actual/Forecast'
-
-#real_details = ['Index Year', 'Deflator']
 
 ''' ONE: master data to be used for analysis'''
 
@@ -343,119 +359,16 @@ proj_names_all = list(latest_q_data.keys())
 #proj_names_group
 
 '''option 3 - bespoke list of projects'''
-#proj_names_bespoke = ['Digital Railway']
+proj_names_bespoke = ['']
 
 '''THREE: enter variables created via options above into functions and run programme'''
 
-latest_financial_data = financial_info(proj_names_all, latest_q_data, all_data_lists)
-last_financial_data = financial_info(proj_names_all, last_q_data, all_data_lists)
-yearago_financial_data = financial_info(proj_names_all, yearago_q_data, all_data_lists)
+latest_financial_data = financial_dict(proj_names_all, latest_q_data, all_data_lists)
+last_financial_data = financial_dict(proj_names_all, last_q_data, all_data_lists)
+yearago_financial_data = financial_dict(proj_names_all, yearago_q_data, all_data_lists)
 
-'''loops through all projects producing indvidual financial profiles.
-first produces profile as reported by project, secondly creates real
-amended to nominal profiles for those projects reporting real. Documents
-are saved accordingly.
-for x in project_names:
-    print(x)
-    one_rdel = financial_info(current_Q_dict[x], capture_rdel)
-    one_cdel = financial_info(current_Q_dict[x], capture_cdel)
-    one_ng = financial_info(current_Q_dict[x], capture_ng)
-    one_income = financial_info(current_Q_dict[x], capture_income)
+'''FOUR: run the programme'''
 
-    try:
-        two_rdel = financial_info(last_Q_dict[x], capture_rdel)
-
-    except KeyError:
-        two_rdel = []
-
-    try:
-        two_cdel = financial_info(last_Q_dict[x], capture_cdel)
-    except KeyError:
-        two_cdel = []
-
-    try:
-        two_ng = financial_info(last_Q_dict[x], capture_ng)
-    except KeyError:
-        two_ng = []
-
-    try:
-        two_income = financial_info(last_Q_dict[x], capture_income)
-    except KeyError:
-        two_income = []
-
-    try:
-        three_rdel = financial_info(yearago_Q_dict[x], capture_rdel)
-    except KeyError:
-        three_rdel = []
-
-    try:
-        three_cdel = financial_info(yearago_Q_dict[x], capture_cdel)
-    except KeyError:
-        three_cdel = []
-
-    try:
-        three_ng = financial_info(yearago_Q_dict[x], capture_ng)
-    except KeyError:
-        three_ng = []
-
-    try:
-        three_income = financial_info(yearago_Q_dict[x], capture_income)
-    except KeyError:
-        three_income = []
-
-    wb = place_in_excel(x, one_rdel, one_cdel, one_ng, one_income, two_rdel, two_cdel, two_ng, two_income, three_rdel,
-                        three_cdel, three_ng, three_income)
-
-    wb.save('C:\\Users\\Standalone\\Will\\Q3_1819_{}_financials.xlsx'.format(x))
-
-    if x in projs_rpting_real:
-        print('coverting ' + x + ' figures to nominal')
-        one_rdel = real_conversion(x, one_rdel, real_meta)
-        one_cdel = real_conversion(x, one_cdel, real_meta)
-        one_ng = real_conversion(x, one_ng, real_meta)
-        one_income = real_conversion(x, one_income, real_meta)
-
-        try:
-            two_rdel = real_conversion(x, two_rdel, real_meta)
-        except KeyError:
-            two_rdel = []
-
-        try:
-            two_cdel = real_conversion(x, two_cdel, real_meta)
-        except KeyError:
-            two_cdel = []
-
-        try:
-            two_ng = real_conversion(x, two_ng, real_meta)
-        except KeyError:
-            two_ng = []
-
-        try:
-            two_income = real_conversion(x, two_income, real_meta)
-        except KeyError:
-            two_income = []
-
-        try:
-            three_rdel = real_conversion(x, three_rdel, real_meta)
-        except KeyError:
-            three_rdel = []
-
-        try:
-            three_cdel = real_conversion(x, three_cdel, real_meta)
-        except KeyError:
-            three_cdel = []
-
-        try:
-            three_ng = real_conversion(x, three_ng, real_meta)
-        except KeyError:
-            three_ng = []
-
-        try:
-            three_income = real_conversion(x, three_income, real_meta)
-        except KeyError:
-            three_income = []
-
-        wb = place_in_excel(x, one_rdel, one_cdel, one_ng, one_income, two_rdel, two_cdel, two_ng, two_income,
-                            three_rdel, three_cdel, three_ng, three_income)
-
-        wb.save('C:\\Users\\Standalone\\Will\\Q3_1819_{}_financials_real_con_nominal.xlsx'.format(x))'''
+for project in proj_names_all:
+    wb = place_in_excel(project, latest_financial_data, last_financial_data, yearago_financial_data)
+    wb.save('C:\\Users\\Standalone\\Will\\Q3_1819_{}_financial profile.xlsx'.format(project))

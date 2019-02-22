@@ -24,9 +24,10 @@ def financial_info(list_names, master_data, cells_to_capture):
     '''
 
     output_dicitonary = {}
+
     for name in list_names:
-        output_list = []
-        try:
+        if name in master_data.keys():
+            output_list = []
             for item in master_data[name]:
                 if item in cells_to_capture:
                     if master_data[name][item] is None:
@@ -41,7 +42,7 @@ def financial_info(list_names, master_data, cells_to_capture):
                         output_list.append(tuple)
 
             output_dicitonary[name] = output_list
-        except KeyError:
+        else:
             pass
 
     return output_dicitonary
