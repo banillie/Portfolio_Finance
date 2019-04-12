@@ -345,9 +345,10 @@ all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
 ''' ONE: master data to be used for analysis'''
 
-latest_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\master_3_2018.xlsx')
-last_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx')
-yearago_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\master_3_2017.xlsx')
+latest_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\'
+                                         'core data\\merged_master_testing.xlsx')
+last_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_2_2018.xlsx')
+yearago_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2017.xlsx')
 
 '''TWO: project name list options - this is where the group of interest is specified '''
 
