@@ -28,8 +28,8 @@ def financial_info(list_names, master_data, cells_to_capture):
     for name in list_names:
         if name in master_data.keys():
             output_list = []
-            for item in master_data[name]:
-                if item in cells_to_capture:
+            for item in cells_to_capture:
+                if item in master_data[name]:
                     if master_data[name][item] is None:
                         key = item
                         value = 0
