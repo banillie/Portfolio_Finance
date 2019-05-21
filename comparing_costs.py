@@ -90,8 +90,8 @@ def get_wlc(data, key):
 red_text = Font(color="FF0000")
 
 '''Data'''
-latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_3_2018.xlsx")
-last_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\master_2_2018.xlsx")
+latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
+last_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx")
 
 '''option to remove projects, such as rail franchising projects'''
 remove_projects = ['West Coast Partnership Franchise', 'South Eastern Rail Franchise Competition',
@@ -105,10 +105,10 @@ remove_projects = ['West Coast Partnership Franchise', 'South Eastern Rail Franc
 #two = get_yearly_costs(last_q, cost_list, year_interest, remove_projects)
 
 '''for wlc'''
-wlc_key = 'Pre 18-19 Forecast Non-Gov'
+wlc_key = 'Total Forecast'
 one = get_wlc(latest_q, wlc_key)
 two = get_wlc(last_q, wlc_key)
 
 output = compare(one, two)
 
-output.save("C:\\Users\\Standalone\\Will\\for_crossrail.xlsx")
+output.save("C:\\Users\\Standalone\\Will\\Q4_1819_wlc_totals_ver_2.xlsx")

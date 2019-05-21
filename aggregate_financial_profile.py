@@ -1,10 +1,23 @@
 '''
 Programme to create a financial profile for a group of projects i.e. can produce the portfolio profile or a chosen
-set of projects profile.
+set of projects profile. It also has the option for comparing like for like projects across projects if necessary
 
-Outputs a workbook.
+Input documents.
+1) Two quarter master data sets
 
-work is required to make it more generic/flexible
+Output documents
+2) Excel spreadsheet contain a graph with financial profile
+
+Instructions:
+1) Provide paths to master data sets. Note the second master date set is only used to produce a list of projects
+for like for like comparison.
+2) Choose appropriate project name list options - this is where the group of interest for the aggregate chart is
+specified.
+3) specify which project names are to be removed from total figures. This is necessary as some projects should be
+removed to prevent double counting. This is where like for like of like projects can be specified also.
+4) enter variables created via options above into functions and run programme.
+5) specify where to save to output file - excel spreadsheet with graph
+
 '''
 
 from bcompiler.utils import project_data_from_master
@@ -12,7 +25,6 @@ from openpyxl import Workbook
 from openpyxl.chart import LineChart, Reference
 from openpyxl.chart.text import RichText
 from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
-
 
 def financial_info(list_names, master_data, cells_to_capture):
 
@@ -47,8 +59,7 @@ def financial_info(list_names, master_data, cells_to_capture):
 
     return output_dicitonary
 
-
-def year_totals(list_names, cells_to_capture, fin_data):
+def year_totals(list_names, remove_from_totals, cells_to_capture, fin_data):
 
     '''
     function  calculates the total spend each year. The yearly totals are used to calculate
@@ -76,7 +87,6 @@ def year_totals(list_names, cells_to_capture, fin_data):
     #print('these project\'s costs have been removed from totals' + remove_from_totals)
 
     return totals_list
-
 
 def likeforlike(data_1, data_2):
     '''
@@ -222,11 +232,6 @@ def place_in_excel(fin_data, totals, cells_to_capture):
 
     return wb
 
-'''
-
-INPUT FOR RUNNING PROGRAMME
-
-'''
 
 '''List of financial data keys to capture. This should be amended to years of interest'''
 
@@ -234,7 +239,6 @@ capture_rdel = ['18-19 RDEL Forecast Total', '19-20 RDEL Forecast Total',
                  '20-21 RDEL Forecast Total','21-22 RDEL Forecast Total','22-23 RDEL Forecast Total',
                  '23-24 RDEL Forecast Total','24-25 RDEL Forecast Total','25-26 RDEL Forecast Total',
                  '26-27 RDEL Forecast Total','27-28 RDEL Forecast Total','Unprofiled RDEL Forecast Total']
-
 
 capture_cdel = ['18-19 CDEL Forecast Total','19-20 CDEL Forecast Total',
                 '20-21 CDEL Forecast Total','21-22 CDEL Forecast Total',
@@ -256,16 +260,18 @@ capture_income =['18-19 Forecast - Income both Revenue and Capital', '19-20 Fore
 
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
-''' ONE: master data to be used for analysis'''
+'''1) Provide paths to master data sets. Note the second master date set is only used to produce a list of projects
+for like for like comparison.'''
 
-latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\merged_master"
-                                    "_testing.xlsx")
-other_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_2_2018.xlsx")
+q_one = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
 
-''' TWO: project name list options - this is where the group of interest is specified '''
+q_two = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_1_2018.xlsx")
+
+''' 2) Choose appropriate project name list options - this is where the group of interest for the aggregate chart is 
+specified. '''
 
 '''option 1 - all '''
-proj_names_all = list(latest_q.keys())
+proj_names_all = list(q_one.keys())
 
 '''option 2 - a group'''
 #TODO write function for filtering list of project names based on group
@@ -274,19 +280,33 @@ proj_names_all = list(latest_q.keys())
 '''option 3 - bespoke list of projects'''
 #proj_names_bespoke = ['Digital Railway']
 
-'''THREE: project names to be removed from total figures - chose as necessary'''
+'''3) specify which project names are to be removed from total figures. This is necessary as some projects should be
+removed to prevent double counting. This is where like for like of like projects can be specified also. '''
+
+'''firstly specify which projects to remove from double counting'''
 dont_double_count = ['HS2 Phase 2b', 'HS2 Phase1', 'HS2 Phase2a', 'East Midlands Franchise',
                       'South Eastern Rail Franchise Competition', 'West Coast Partnership Franchise']
 
-like_for_like = likeforlike(latest_q, other_q_data)
+'''option 1 - just remove projects from double counting'''
+remove_double_counting_totals = dont_double_count
 
-remove_from_totals = dont_double_count + like_for_like
+'''option 2 - remove projects from double counting and any new projects that should not be counted to ensure like for
+like comparision.'''
+only_like_for_like = likeforlike(q_one, q_two)
+like_for_like_totals = dont_double_count + only_like_for_like
 
-'''Four: enter variables created via options above into functions and run programme'''
+'''4) enter variables created via options above into functions and run programme'''
 
-finance_data = financial_info(proj_names_all, latest_q, all_data_lists)
-total_data = year_totals(proj_names_all, all_data_lists, latest_q)
+'''step one run finance_info function by place variables in this order (list_names, master_data, cells_to_capture)'''
+finance_data = financial_info(proj_names_all, q_one, all_data_lists)
 
+'''step two, run the year_totals function to get year totals by placing variables in this order 
+(list_names, remove_from_totals, cells_to_capture, fin_data) '''
+total_data = year_totals(proj_names_all, like_for_like_totals, all_data_lists, q_one)
+
+'''step three, run the place_in_excel function by placing variables in this order (fin_data, totals, cells_to_capture)'''
 output = place_in_excel(finance_data, total_data, all_data_lists)
 
-output.save("C:\\Users\\Standalone\\Will\\test_output.xlsx")
+'''5) specify where to save to output file - excel spreadsheet with graph'''
+
+output.save("C:\\Users\\Standalone\\Will\\testing.xlsx")
