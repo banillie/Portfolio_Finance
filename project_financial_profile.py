@@ -1,9 +1,14 @@
 '''
-Programme to create a financial profile for individual projects.
+Programme that creates financial cost profile for individual projects. Follow instructions below.
 
-Outputs a workbook which includes a graph.
+Input:
+1) three quarters worth of data
 
-work is required to make it more generic/flexible
+Output:
+2) excel graph for each project.
+
+Notes: this code works but is old and could do with some refactoring/updating when I have a chance to get around to it.
+How it processes income finance data is to be tested.
 '''
 
 
@@ -32,7 +37,6 @@ def financial_dict(name_list, master_data, cells_to_capture):
         output_dict[name] = get_dict_info
 
     return output_dict
-
 
 def financial_info(name, master_data, cells_to_capture):
     '''
@@ -72,11 +76,20 @@ def calculate_totals(name, fin_data):
     ng_list = []
 
     for rdel in capture_rdel:
-        rdel_list.append(working_data[rdel])
+        try:
+            rdel_list.append(working_data[rdel])
+        except KeyError:
+            rdel_list.append(int(0))
     for cdel in capture_cdel:
-        cdel_list.append(working_data[cdel])
+        try:
+            cdel_list.append(working_data[cdel])
+        except KeyError:
+            cdel_list.append(int(0))
     for ng in capture_ng:
-        ng_list.append(working_data[ng])
+        try:
+            ng_list.append(working_data[ng])
+        except KeyError:
+            ng_list.append(int(0))
 
     total_list = []
     for i in range(len(rdel_list)):
@@ -96,7 +109,10 @@ def calculate_income_totals(name, fin_data):
     income_list = []
 
     for income in capture_income:
-        income_list.append(working_data[income])
+        try:
+            income_list.append(working_data[income])
+        except KeyError:
+            income_list.append(int(0))
 
     return income_list
 
@@ -115,11 +131,20 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
     '''places in raw/reported data'''
     for data in data_list:
         for i, key in enumerate(capture_rdel):
-            ws.cell(row=i+3, column=2+count, value=data[name][key])
+            try:
+                ws.cell(row=i+3, column=2+count, value=data[name][key])
+            except KeyError:
+                ws.cell(row=i + 3, column=2 + count, value=0)
         for i, key in enumerate(capture_cdel):
-            ws.cell(row=i+3, column=3+count, value=data[name][key])
+            try:
+                ws.cell(row=i+3, column=3+count, value=data[name][key])
+            except KeyError:
+                ws.cell(row=i + 3, column=3 + count, value=0)
         for i, key in enumerate(capture_ng):
-            ws.cell(row=i+3, column=4+count, value=data[name][key])
+            try:
+                ws.cell(row=i+3, column=4+count, value=data[name][key])
+            except KeyError:
+                ws.cell(row=i + 3, column=4 + count, value=0)
         count += 4
 
     '''places in totals'''
@@ -137,7 +162,7 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
 
     '''labeling data in table'''
 
-    labeling_list_quarter = ['Baseline', 'Last Quarter', 'Latest quarter']
+    labeling_list_quarter = ['One year ago', 'Last Quarter', 'Latest quarter']
 
     ws.cell(row=1, column=2, value=labeling_list_quarter[0])
     ws.cell(row=1, column=6, value=labeling_list_quarter[1])
@@ -152,8 +177,8 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
         c += 4
         repeat -= 1
 
-    labeling_list_year = ['Spend', '18/19', '19/20', '20/21', '21/22', '22/23', '23/24', '24/25', '25/26', '26/27',
-                          '27/28', 'Unprofiled']
+    labeling_list_year = ['Spend', '19/20', '20/21', '21/22', '22/23', '23/24', '24/25', '25/26', '26/27', '27/28',
+                          '28/29', 'Unprofiled']
 
     for i, label in enumerate(labeling_list_year):
         ws.cell(row=2+i, column=1, value=label)
@@ -302,8 +327,6 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
 
     return wb
 
-
-
 '''
 
 INPUT FOR RUNNING PROGRAMME
@@ -312,41 +335,35 @@ INPUT FOR RUNNING PROGRAMME
 
 '''List of financial data keys to capture. This should be amended to years of interest'''
 
-capture_rdel = ['18-19 RDEL Forecast Total', '19-20 RDEL Forecast Total',
-                 '20-21 RDEL Forecast Total','21-22 RDEL Forecast Total','22-23 RDEL Forecast Total',
-                 '23-24 RDEL Forecast Total','24-25 RDEL Forecast Total','25-26 RDEL Forecast Total',
-                 '26-27 RDEL Forecast Total','27-28 RDEL Forecast Total','Unprofiled RDEL Forecast Total']
+capture_rdel = ['19-20 RDEL Forecast Total', '20-21 RDEL Forecast Total', '21-22 RDEL Forecast Total',
+                '22-23 RDEL Forecast Total', '23-24 RDEL Forecast Total', '24-25 RDEL Forecast Total',
+                '25-26 RDEL Forecast Total', '26-27 RDEL Forecast Total', '27-28 RDEL Forecast Total',
+                '28-29 RDEL Forecast Total', 'Unprofiled RDEL Forecast Total']
 
 
-capture_cdel = ['18-19 CDEL Forecast Total','19-20 CDEL Forecast Total',
-                '20-21 CDEL Forecast Total','21-22 CDEL Forecast Total',
-                 '22-23 CDEL Forecast Total','23-24 CDEL Forecast Total','24-25 CDEL Forecast Total',
-                 '25-26 CDEL Forecast Total','26-27 CDEL Forecast Total','27-28 CDEL Forecast Total',
-                 'Unprofiled CDEL Forecast Total']
+capture_cdel = ['19-20 CDEL Forecast Total', '20-21 CDEL Forecast Total', '21-22 CDEL Forecast Total',
+                 '22-23 CDEL Forecast Total', '23-24 CDEL Forecast Total', '24-25 CDEL Forecast Total',
+                 '25-26 CDEL Forecast Total', '26-27 CDEL Forecast Total', '27-28 CDEL Forecast Total',
+                 '28-29 CDEL Forecast Total', 'Unprofiled CDEL Forecast Total']
 
-capture_ng = ['18-19 Forecast Non-Gov','19-20 Forecast Non-Gov','20-21 Forecast Non-Gov','21-22 Forecast Non-Gov',
-                 '22-23 Forecast Non-Gov','23-24 Forecast Non-Gov','24-25 Forecast Non-Gov',
-                 '25-26 Forecast Non-Gov','26-27 Forecast Non-Gov',
-                 '27-28 Forecast Non-Gov','Unprofiled Forecast-Gov']
+capture_ng = ['19-20 Forecast Non-Gov', '20-21 Forecast Non-Gov', '21-22 Forecast Non-Gov', '22-23 Forecast Non-Gov',
+              '23-24 Forecast Non-Gov', '24-25 Forecast Non-Gov', '25-26 Forecast Non-Gov', '26-27 Forecast Non-Gov',
+              '27-28 Forecast Non-Gov', '28-29 Forecast Non-Gov', 'Unprofiled Forecast-Gov']
 
-capture_income =['18-19 Forecast - Income both Revenue and Capital', '19-20 Forecast - Income both Revenue and Capital',
+capture_income =['19-20 Forecast - Income both Revenue and Capital',
                 '20-21 Forecast - Income both Revenue and Capital', '21-22 Forecast - Income both Revenue and Capital',
                 '22-23 Forecast - Income both Revenue and Capital', '23-24 Forecast - Income both Revenue and Capital',
                 '24-25 Forecast - Income both Revenue and Capital', '25-26 Forecast - Income both Revenue and Capital',
                 '26-27 Forecast - Income both Revenue and Capital', '27-28 Forecast - Income both Revenue and Capital',
-                'Unprofiled Forecast Income']
+                '28-29 Forecast - Income both Revenue and Capital', 'Unprofiled Forecast Income']
 
 
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
-
-# TODO add income
-
-
-''' ONE: master data to be used for analysis'''
+''' ONE: provide file paths to master data to be used for analysis'''
 
 latest_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\'
-                                         'core data\\master_4_2018_hs2_draft.xlsx')
+                                         'core data\\test_master.xlsx')
 last_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx')
 yearago_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2017.xlsx')
 
@@ -363,13 +380,11 @@ proj_names_all = list(latest_q_data.keys())
 proj_names_bespoke = ['']
 
 '''THREE: enter variables created via options above into functions and run programme'''
-
 latest_financial_data = financial_dict(proj_names_all, latest_q_data, all_data_lists)
 last_financial_data = financial_dict(proj_names_all, last_q_data, all_data_lists)
 yearago_financial_data = financial_dict(proj_names_all, yearago_q_data, all_data_lists)
 
 '''FOUR: run the programme'''
-
 for project in proj_names_all:
     wb = place_in_excel(project, latest_financial_data, last_financial_data, yearago_financial_data)
-    wb.save('C:\\Users\\Standalone\\Will\\Q4_1819_{}_financial profile.xlsx'.format(project))
+    wb.save('C:\\Users\\Standalone\\Will\\Q1_1819_{}_financial_profile_test.xlsx'.format(project))
