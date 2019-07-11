@@ -327,29 +327,18 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
 
     return wb
 
-'''
-
-INPUT FOR RUNNING PROGRAMME
-
-'''
-
 '''List of financial data keys to capture. This should be amended to years of interest'''
-
 capture_rdel = ['19-20 RDEL Forecast Total', '20-21 RDEL Forecast Total', '21-22 RDEL Forecast Total',
                 '22-23 RDEL Forecast Total', '23-24 RDEL Forecast Total', '24-25 RDEL Forecast Total',
                 '25-26 RDEL Forecast Total', '26-27 RDEL Forecast Total', '27-28 RDEL Forecast Total',
                 '28-29 RDEL Forecast Total', 'Unprofiled RDEL Forecast Total']
-
-
 capture_cdel = ['19-20 CDEL Forecast Total', '20-21 CDEL Forecast Total', '21-22 CDEL Forecast Total',
                  '22-23 CDEL Forecast Total', '23-24 CDEL Forecast Total', '24-25 CDEL Forecast Total',
                  '25-26 CDEL Forecast Total', '26-27 CDEL Forecast Total', '27-28 CDEL Forecast Total',
                  '28-29 CDEL Forecast Total', 'Unprofiled CDEL Forecast Total']
-
 capture_ng = ['19-20 Forecast Non-Gov', '20-21 Forecast Non-Gov', '21-22 Forecast Non-Gov', '22-23 Forecast Non-Gov',
               '23-24 Forecast Non-Gov', '24-25 Forecast Non-Gov', '25-26 Forecast Non-Gov', '26-27 Forecast Non-Gov',
               '27-28 Forecast Non-Gov', '28-29 Forecast Non-Gov', 'Unprofiled Forecast-Gov']
-
 capture_income =['19-20 Forecast - Income both Revenue and Capital',
                 '20-21 Forecast - Income both Revenue and Capital', '21-22 Forecast - Income both Revenue and Capital',
                 '22-23 Forecast - Income both Revenue and Capital', '23-24 Forecast - Income both Revenue and Capital',
@@ -357,15 +346,16 @@ capture_income =['19-20 Forecast - Income both Revenue and Capital',
                 '26-27 Forecast - Income both Revenue and Capital', '27-28 Forecast - Income both Revenue and Capital',
                 '28-29 Forecast - Income both Revenue and Capital', 'Unprofiled Forecast Income']
 
+'''INSTRUCTIONS FOR RUNNING PROGRAMME'''
 
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
 ''' ONE: provide file paths to master data to be used for analysis'''
 
 latest_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\'
-                                         'core data\\test_master.xlsx')
-last_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx')
-yearago_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2017.xlsx')
+                                         'core data\\Hs2_NPR_Q1_1918_draft.xlsx')
+last_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx')
+yearago_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_1_2018.xlsx')
 
 '''TWO: project name list options - this is where the group of interest is specified '''
 

@@ -115,6 +115,8 @@ def place_in_excel(fin_data, totals, cells_to_capture):
     wb = Workbook()
     ws = wb.active
 
+    ws.cell(row=1, column=1).value = 'Project'
+
     for i, name in enumerate(fin_data.keys()):
         '''lists project names in row one'''
         ws.cell(row=1, column=i + 2).value = name
@@ -129,9 +131,21 @@ def place_in_excel(fin_data, totals, cells_to_capture):
     for i, values in enumerate(totals):
         ws.cell(row=i + 2, column=len(fin_data.keys())+2).value = values
 
+    ws.cell(row=1, column=len(fin_data.keys()) + 2).value = 'Total'
+
     '''places keys into the chart in the first column'''
     for i, key in enumerate(cells_to_capture):
         ws.cell(row=i+2, column=1).value = key
+
+    '''information on which projects are not included in totals'''
+    ws.cell(row=1, column=len(fin_data.keys()) + 4).value = 'Projects that have been removed to avoid double counting'
+    for i, project in enumerate(dont_double_count):
+        ws.cell(row=i + 2, column=len(fin_data.keys()) + 4).value = project
+
+    ws.cell(row=1, column=len(fin_data.keys())+6).value = 'Projects that have been removed to enable like for like' \
+                                                          'comparison of totals'
+    for i, project in enumerate(only_like_for_like):
+        ws.cell(row=i + 2, column=len(fin_data.keys())+6).value = project
 
     '''data for overall chart. As above because this data is in a list - possibility of it being unaligned needs 
     testing. not the best way of managing data flow, but working for now'''
@@ -174,17 +188,19 @@ def place_in_excel(fin_data, totals, cells_to_capture):
     ws.cell(row=a, column=5, value='Income')
     ws.cell(row=a, column=6, value='Total')
 
+
     # ws.cell(row=a+1, column=1, value='17/18')
-    ws.cell(row=a + 1, column=1, value='18/19')
-    ws.cell(row=a + 2, column=1, value='19/20')
-    ws.cell(row=a + 3, column=1, value='20/21')
-    ws.cell(row=a + 4, column=1, value='21/22')
-    ws.cell(row=a + 5, column=1, value='22/23')
-    ws.cell(row=a + 6, column=1, value='23/24')
-    ws.cell(row=a + 7, column=1, value='24/25')
-    ws.cell(row=a + 8, column=1, value='25/26')
-    ws.cell(row=a + 9, column=1, value='26/27')
-    ws.cell(row=a + 10, column=1, value='27/28')
+    #ws.cell(row=a + 1, column=1, value='18/19')
+    ws.cell(row=a + 1, column=1, value='19/20')
+    ws.cell(row=a + 2, column=1, value='20/21')
+    ws.cell(row=a + 3, column=1, value='21/22')
+    ws.cell(row=a + 4, column=1, value='22/23')
+    ws.cell(row=a + 5, column=1, value='23/24')
+    ws.cell(row=a + 6, column=1, value='24/25')
+    ws.cell(row=a + 7, column=1, value='25/26')
+    ws.cell(row=a + 8, column=1, value='26/27')
+    ws.cell(row=a + 9, column=1, value='27/28')
+    ws.cell(row=a + 10, column=1, value='28/29')
     ws.cell(row=a + 11, column=1, value='Unprofiled')
 
     '''this builds a very basic chart'''
@@ -232,40 +248,35 @@ def place_in_excel(fin_data, totals, cells_to_capture):
 
     return wb
 
-
 '''List of financial data keys to capture. This should be amended to years of interest'''
-
-capture_rdel = ['18-19 RDEL Forecast Total', '19-20 RDEL Forecast Total',
-                 '20-21 RDEL Forecast Total','21-22 RDEL Forecast Total','22-23 RDEL Forecast Total',
-                 '23-24 RDEL Forecast Total','24-25 RDEL Forecast Total','25-26 RDEL Forecast Total',
-                 '26-27 RDEL Forecast Total','27-28 RDEL Forecast Total','Unprofiled RDEL Forecast Total']
-
-capture_cdel = ['18-19 CDEL Forecast Total','19-20 CDEL Forecast Total',
-                '20-21 CDEL Forecast Total','21-22 CDEL Forecast Total',
-                 '22-23 CDEL Forecast Total','23-24 CDEL Forecast Total','24-25 CDEL Forecast Total',
-                 '25-26 CDEL Forecast Total','26-27 CDEL Forecast Total','27-28 CDEL Forecast Total',
-                 'Unprofiled CDEL Forecast Total']
-
-capture_ng = ['18-19 Forecast Non-Gov','19-20 Forecast Non-Gov','20-21 Forecast Non-Gov','21-22 Forecast Non-Gov',
-                 '22-23 Forecast Non-Gov','23-24 Forecast Non-Gov','24-25 Forecast Non-Gov',
-                 '25-26 Forecast Non-Gov','26-27 Forecast Non-Gov',
-                 '27-28 Forecast Non-Gov','Unprofiled Forecast-Gov']
-
-capture_income =['18-19 Forecast - Income both Revenue and Capital', '19-20 Forecast - Income both Revenue and Capital',
+capture_rdel = ['19-20 RDEL Forecast Total', '20-21 RDEL Forecast Total', '21-22 RDEL Forecast Total',
+                '22-23 RDEL Forecast Total', '23-24 RDEL Forecast Total', '24-25 RDEL Forecast Total',
+                '25-26 RDEL Forecast Total', '26-27 RDEL Forecast Total', '27-28 RDEL Forecast Total',
+                '28-29 RDEL Forecast Total', 'Unprofiled RDEL Forecast Total']
+capture_cdel = ['19-20 CDEL Forecast Total', '20-21 CDEL Forecast Total', '21-22 CDEL Forecast Total',
+                 '22-23 CDEL Forecast Total', '23-24 CDEL Forecast Total', '24-25 CDEL Forecast Total',
+                 '25-26 CDEL Forecast Total', '26-27 CDEL Forecast Total', '27-28 CDEL Forecast Total',
+                 '28-29 CDEL Forecast Total', 'Unprofiled CDEL Forecast Total']
+capture_ng = ['19-20 Forecast Non-Gov', '20-21 Forecast Non-Gov', '21-22 Forecast Non-Gov', '22-23 Forecast Non-Gov',
+              '23-24 Forecast Non-Gov', '24-25 Forecast Non-Gov', '25-26 Forecast Non-Gov', '26-27 Forecast Non-Gov',
+              '27-28 Forecast Non-Gov', '28-29 Forecast Non-Gov', 'Unprofiled Forecast-Gov']
+capture_income =['19-20 Forecast - Income both Revenue and Capital',
                 '20-21 Forecast - Income both Revenue and Capital', '21-22 Forecast - Income both Revenue and Capital',
                 '22-23 Forecast - Income both Revenue and Capital', '23-24 Forecast - Income both Revenue and Capital',
                 '24-25 Forecast - Income both Revenue and Capital', '25-26 Forecast - Income both Revenue and Capital',
                 '26-27 Forecast - Income both Revenue and Capital', '27-28 Forecast - Income both Revenue and Capital',
-                'Unprofiled Forecast Income']
+                '28-29 Forecast - Income both Revenue and Capital', 'Unprofiled Forecast Income']
 
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
+
+'''INSTRUCTION FOR RUNNING PROGRAMME'''
 
 '''1) Provide paths to master data sets. Note the second master date set is only used to produce a list of projects
 for like for like comparison.'''
 
-q_one = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
-
-q_two = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_1_2018.xlsx")
+q_one = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\Hs2_NPR_Q1_1918_draft.xlsx")
+q_two = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3"
+                                 "_2018.xlsx")
 
 ''' 2) Choose appropriate project name list options - this is where the group of interest for the aggregate chart is 
 specified. '''
@@ -304,9 +315,10 @@ finance_data = financial_info(proj_names_all, q_one, all_data_lists)
 (list_names, remove_from_totals, cells_to_capture, fin_data) '''
 total_data = year_totals(proj_names_all, like_for_like_totals, all_data_lists, q_one)
 
-'''step three, run the place_in_excel function by placing variables in this order (fin_data, totals, cells_to_capture)'''
+'''step three, run and place data_in_excel function by placing variables in this order (fin_data, totals, 
+cells_to_capture)'''
 output = place_in_excel(finance_data, total_data, all_data_lists)
 
 '''5) specify where to save to output file - excel spreadsheet with graph'''
 
-output.save("C:\\Users\\Standalone\\Will\\testing.xlsx")
+output.save("C:\\Users\\Standalone\\Will\\Q1_1920_financial profile.xlsx")
