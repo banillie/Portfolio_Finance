@@ -1,18 +1,13 @@
 '''
-Programme to compare projects wlc values.
-
-It can be used to compare a specific year or total wlc information. It produces a wb output with data and calculations
-only i.e. no graph.
-
-Changes to wlc in relation 1) overall figures, 2) change between quarters, 3) percent change are highlighted
-in red if change is greater/less than £100m/-£100m or percentage change greater/less than 5%/-5% of project value
+Programme to compare a specific year or total wlc information. It produces a wb output with data and calculations
+only i.e. no graph. The output shows changes to wlc in relation 1) overall figures, 2) change between quarters,
+3) percent change are highlighted in red if change is greater/less than £100m/-£100m or percentage change greater/less
+than 5%/-5% of project value
 '''
-
 
 from bcompiler.utils import project_data_from_master
 from openpyxl import Workbook
 from openpyxl.styles import Font
-
 
 def compare(data_1, data_2):
     wb = Workbook()
@@ -60,20 +55,18 @@ def compare(data_1, data_2):
     ws.cell(row=1, column=5).value = 'Percentage Change'
     return wb
 
-def get_yearly_costs(data, cost_list, year, remove):
+def get_yearly_costs(data, cost_list, year):
     output_dict = {}
     for name in data:
-
-        if name not in remove:
-            project_dict = data[name]
-            total = 0
-            for type in cost_list:
-                if year + type in project_dict.keys():
-                    cost = project_dict[year + type]
-                    try:
-                        total = total + cost
-                    except TypeError:
-                        pass
+        project_dict = data[name]
+        total = 0
+        for type in cost_list:
+            if year + type in project_dict.keys():
+                cost = project_dict[year + type]
+                try:
+                    total = total + cost
+                except TypeError:
+                    pass
 
         output_dict[name] = total
 
@@ -89,26 +82,32 @@ def get_wlc(data, key):
 
 red_text = Font(color="FF0000")
 
-'''Data'''
-latest_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
-last_q = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx")
+'''INSTRUCTIONS FOR RUNNING PROGRAMME'''
 
-'''option to remove projects, such as rail franchising projects'''
-remove_projects = ['West Coast Partnership Franchise', 'South Eastern Rail Franchise Competition',
-                   'Rail Franchising Programme', 'East Midlands Franchise', 'HS2 Phase 2b',
-                   'HS2 Phase1', 'HS2 Phase2a']
+'''1) specify file paths to where master data for analysis is stored.'''
+latest_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
+other_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx")
 
-'''for yearly information'''
-#cost_list = [' RDEL Forecast Total', ' CDEL Forecast Total', ' Forecast Non-Gov']
-#year_interest = '23-24'
-#one = get_yearly_costs(latest_q, cost_list, year_interest, remove_projects)
-#two = get_yearly_costs(last_q, cost_list, year_interest, remove_projects)
+'''2) decide which output you require'''
 
-'''for wlc'''
-wlc_key = 'Total Forecast'
-one = get_wlc(latest_q, wlc_key)
-two = get_wlc(last_q, wlc_key)
+'''option one - in year financial information'''
+'''in year cost lists is chosen through the cost list. No not change.'''
+cost_list = [' RDEL Forecast Total', ' CDEL Forecast Total', ' Forecast Non-Gov']
+'''in year income list is chosen through the income list. No not change.'''
+income_list = [' Forecast - Income both Revenue and Capital']
+'''chose financial year of interest. change accordingly'''
+year_interest = '19-20'
 
-output = compare(one, two)
+'''get fy information by entering the appropriate variables'''
+one_fy = get_yearly_costs(latest_q_data, cost_list, year_interest)
+two_fy = get_yearly_costs(other_q_data, cost_list, year_interest)
 
-output.save("C:\\Users\\Standalone\\Will\\Q4_1819_wlc_totals_ver_2.xlsx")
+'''option two - for wlc costs'''
+'''chose wlc cost key of interest'''
+wlc_key = 'Total Forecast - Income both Revenue and Capital'
+one_wlc = get_wlc(latest_q_data, wlc_key)
+two_wlc = get_wlc(other_q_data, wlc_key)
+
+'''enter desired variables into the compare function and specify file path for where output document to be saved'''
+output = compare(one_wlc, two_wlc)
+output.save("C:\\Users\\Standalone\\Will\\total_income_Q4_1819_data.xlsx")

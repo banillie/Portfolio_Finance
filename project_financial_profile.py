@@ -8,7 +8,9 @@ Output:
 2) excel graph for each project.
 
 Notes: this code works but is old and could do with some refactoring/updating when I have a chance to get around to it.
-How it processes income finance data is to be tested.
+
+Have been testing and amending code/master keys to ensure income data comes through. Should be ok, but further tests
+required with Q1 1920 data
 '''
 
 
@@ -17,9 +19,6 @@ from bcompiler.utils import project_data_from_master
 from openpyxl.chart import LineChart, Reference
 from openpyxl.chart.text import RichText
 from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
-#from aggregate_financial_profile import financial_info
-
-# TODO change/tweak how it is designed so can use functions from aggregate_financial_profile
 
 def financial_dict(name_list, master_data, cells_to_capture):
     '''
@@ -346,9 +345,9 @@ capture_income =['19-20 Forecast - Income both Revenue and Capital',
                 '26-27 Forecast - Income both Revenue and Capital', '27-28 Forecast - Income both Revenue and Capital',
                 '28-29 Forecast - Income both Revenue and Capital', 'Unprofiled Forecast Income']
 
-'''INSTRUCTIONS FOR RUNNING PROGRAMME'''
-
 all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
+
+'''INSTRUCTIONS FOR RUNNING PROGRAMME'''
 
 ''' ONE: provide file paths to master data to be used for analysis'''
 
@@ -364,7 +363,7 @@ proj_names_all = list(latest_q_data.keys())
 
 '''option 2 - a group'''
 #TODO write function for filtering list of project names based on group
-#proj_names_group
+proj_names_group = ['East Midlands Franchise', 'Rail Franchising Programme', 'West Coast Partnership Franchise']
 
 '''option 3 - bespoke list of projects'''
 proj_names_bespoke = ['']
@@ -377,4 +376,4 @@ yearago_financial_data = financial_dict(proj_names_all, yearago_q_data, all_data
 '''FOUR: run the programme'''
 for project in proj_names_all:
     wb = place_in_excel(project, latest_financial_data, last_financial_data, yearago_financial_data)
-    wb.save('C:\\Users\\Standalone\\Will\\Q1_1819_{}_financial_profile_test.xlsx'.format(project))
+    wb.save('C:\\Users\\Standalone\\Will\\Q1_1920_{}_financial_profile.xlsx'.format(project))
