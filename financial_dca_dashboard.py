@@ -395,8 +395,6 @@ def placing_excel(dict_one, dict_two):
     return wb
 
 
-
-
 '''keys of interest for current quarter'''
 dash_keys = ['Total Forecast', 'SRO Finance confidence']
 
@@ -410,32 +408,27 @@ all_keys = dash_keys + gmpp_narrative_keys + bicc_narrative_keys
 '''key of interest for previous quarter'''
 dash_keys_previous_quarter = ['SRO Finance confidence']
 
-# keys_to_concatenate = ['Start of Operation', 'Project - End Date', 'Last time at BICC',
-#                        'Next at BICC']
-
 '''1) Provide file path to empty dashboard document'''
 wb = load_workbook(
-    'C:\\Users\\Standalone\\Will\\masters folder\\Financial\\Q4_1819\\'
-    'finance_dashboard master_Q4_1819.xlsx')
+    'C:\\Users\\Standalone\\Will\\masters folder\\Financial\\Q1_1920\\'
+    'finance_dashboard master_Q1_1920.xlsx')
 ws = wb.active
 
 '''2) Provide file path to master data sets'''
 data_one = project_data_from_master(
-    'C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018_wip.xlsx')
+    'C:\\Users\\Standalone\\Will\\masters folder\\core data\\Hs2_NPR_Q1_1918_draft.xlsx')
 data_two = project_data_from_master(
-    'C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx')
+    'C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx')
 
 p_names = list(data_one.keys())
 #p_names = ['Digital Railway'] # can be useful for checking specific projects/the programme so leaving for now
 
 '''3) Specify data of bicc that is discussing the report. NOTE: Python date format is (YYYY,MM,DD)'''
-bicc_date = datetime.datetime(2019, 5, 13)
+bicc_date = datetime.datetime(2019, 9, 9)
 
-
+'''ignore'''
 latest_q_dict = inital_dict(p_names, data_one, all_keys)
 last_q_dict = inital_dict(p_names, data_two, dash_keys_previous_quarter)
-#m_data = all_milestone_data(data_one)
-#latest_q_dict_2 = add_sop_pend_data(m_data, latest_q_dict)
 merged_dict = final_dict(latest_q_dict, last_q_dict, 'SRO Finance confidence')
 wb = placing_excel(merged_dict, last_q_dict)
 
