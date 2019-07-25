@@ -10,17 +10,19 @@ exactly the same for information to be released.
 2) Master data for two quarters - this will usually be latest and previous quarter
 
 output document:
-3) Dashboard with all project data placed into dashboard and formatted correctly.
+3) Dashboard with all project data placed into dashboard. The aim of this programme is to get all relevant data into one
+document. From this point on only projects of interest. i.e. those with red confidence ratings or that have changed in
+financial confidence should remain on the dashboard. the others should be delete. The financial narrative provided for
+each project should be checked.
 
 Instructions:
 1) provide path to dashboard master
 2) provide path to master data sets
-3) change bicc_date variable
-4) provide path and specify file name for output document
+3) provide path and specify file name for output document
 
-Note some manual adjustments may need to be made to:
+Note some manual adjustments may need to be made to output document, this includes:
 1) Project WLC totals e.g. Hs2 Phases
-2) The last/next at BICC specification. e.g. Hs2 Prog should be changed to 'often'
+
 
 '''
 
@@ -85,109 +87,6 @@ def add_sop_pend_data(m_data, dict):
             dict[name]['Project - End Date'] = None
 
     return dict
-
-'''function for converting dates into concatenated written time periods'''
-def concatenate_dates(date):
-    today = bicc_date
-    if date != None:
-        a = (date - today.date()).days
-        year = 365
-        month = 30
-        fortnight = 14
-        week = 7
-        if a >= 365:
-            yrs = int(a / year)
-            holding_days_years = a % year
-            months = int(holding_days_years / month)
-            holding_days_months = a % month
-            fortnights = int(holding_days_months / fortnight)
-            weeks = int(holding_days_months / week)
-        elif 0 <= a <= 365:
-            yrs = 0
-            months = int(a / month)
-            holding_days_months = a % month
-            fortnights = int(holding_days_months / fortnight)
-            weeks = int(holding_days_months / week)
-            # if 0 <= a <=60:
-        elif a <= -365:
-            yrs = int(a / year)
-            holding_days = a % -year
-            months = int(holding_days / month)
-            holding_days_months = a % -month
-            fortnights = int(holding_days_months / fortnight)
-            weeks = int(holding_days_months / week)
-        elif -365 <= a <= 0:
-            yrs = 0
-            months = int(a / month)
-            holding_days_months = a % -month
-            fortnights = int(holding_days_months / fortnight)
-            weeks = int(holding_days_months / week)
-            # if -60 <= a <= 0:
-        else:
-            print('something is wrong and needs checking')
-
-        if yrs == 1:
-            if months == 1:
-                return ('{} yr, {} mth'.format(yrs, months))
-            if months > 1:
-                return ('{} yr, {} mths'.format(yrs, months))
-            else:
-                return ('{} yr'.format(yrs))
-        elif yrs > 1:
-            if months == 1:
-                return ('{} yrs, {} mth'.format(yrs, months))
-            if months > 1:
-                return ('{} yrs, {} mths'.format(yrs, months))
-            else:
-                return ('{} yrs'.format(yrs))
-        elif yrs == 0:
-            if a == 0:
-                return ('Today')
-            elif 1 <= a <= 6:
-                return ('This week')
-            elif 7 <= a <= 13:
-                return ('Next week')
-            elif -7 <= a <= -1:
-                return ('Last week')
-            elif -14 <= a <= -8:
-                return ('-2 weeks')
-            elif 14 <= a <= 20:
-                return ('2 weeks')
-            elif 20 <= a <= 60:
-                if today.month == date.month:
-                    return ('Later this mth')
-                elif (date.month - today.month) == 1:
-                    return ('Next mth')
-                else:
-                    return ('2 mths')
-            elif -60 <= a <= -15:
-                if today.month == date.month:
-                    return ('Earlier this mth')
-                elif (date.month - today.month) == -1:
-                    return ('Last mth')
-                else:
-                    return ('-2 mths')
-            elif months == 12:
-                return ('1 yr')
-            else:
-                return ('{} mths'.format(months))
-
-        elif yrs == -1:
-            if months == -1:
-                return ('{} yr, {} mth'.format(yrs, -(months)))
-            if months < -1:
-                return ('{} yr, {} mths'.format(yrs, -(months)))
-            else:
-                return ('{} yr'.format(yrs))
-        elif yrs < -1:
-            if months == -1:
-                return ('{} yrs, {} mth'.format(yrs, -(months)))
-            if months < -1:
-                return ('{} yrs, {} mths'.format(yrs, -(months)))
-            else:
-                return ('{} yrs'.format(yrs))
-    else:
-        return ('None')
 
 '''function for calculating if confidence has increased decreased'''
 def up_or_down(latest_dca, last_dca):
@@ -271,7 +170,10 @@ def placing_excel(dict_one, dict_two):
     for row_num in range(2, ws.max_row + 1):
         project_name = ws.cell(row=row_num, column=3).value
         if project_name in dict_two:
-            ws.cell(row=row_num, column=5).value = dict_two[project_name]['SRO Finance confidence']
+            try:
+                ws.cell(row=row_num, column=5).value = dict_two[project_name]['SRO Finance confidence']
+            except KeyError:
+                pass
 
     # Highlight cells that contain RAG text, with background and text the same colour. column E.
     ag_text = Font(color="00a5b700")
@@ -409,29 +311,25 @@ all_keys = dash_keys + gmpp_narrative_keys + bicc_narrative_keys
 dash_keys_previous_quarter = ['SRO Finance confidence']
 
 '''1) Provide file path to empty dashboard document'''
-wb = load_workbook(
-    'C:\\Users\\Standalone\\Will\\masters folder\\Financial\\Q1_1920\\'
-    'finance_dashboard master_Q1_1920.xlsx')
+wb = load_workbook('C:\\Users\\Standalone\\general\\masters folder\\Financial\\Q1_1920\\'
+                   'finance_dashboard master_Q1_1920.xlsx')
 ws = wb.active
 
 '''2) Provide file path to master data sets'''
-data_one = project_data_from_master(
-    'C:\\Users\\Standalone\\Will\\masters folder\\core data\\Hs2_NPR_Q1_1918_draft.xlsx')
-data_two = project_data_from_master(
-    'C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx')
+data_one = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2019_wip_'
+                                    '(18_7_19).xlsx')
+data_two = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2018.xlsx')
 
+'''This code runs the programme and can be ignored as variables to enter into functions do not change'''
 p_names = list(data_one.keys())
 #p_names = ['Digital Railway'] # can be useful for checking specific projects/the programme so leaving for now
 
-'''3) Specify data of bicc that is discussing the report. NOTE: Python date format is (YYYY,MM,DD)'''
-bicc_date = datetime.datetime(2019, 9, 9)
-
-'''ignore'''
+# '''3) Specify data of bicc that is discussing the report. NOTE: Python date format is (YYYY,MM,DD)'''
+# bicc_date = datetime.datetime(2019, 9, 9)
 latest_q_dict = inital_dict(p_names, data_one, all_keys)
 last_q_dict = inital_dict(p_names, data_two, dash_keys_previous_quarter)
 merged_dict = final_dict(latest_q_dict, last_q_dict, 'SRO Finance confidence')
 wb = placing_excel(merged_dict, last_q_dict)
 
 '''4) provide file path and specific name of output file.'''
-wb.save(
-    'C:\\Users\\Standalone\\Will\\test.xlsx')
+wb.save('C:\\Users\\Standalone\\general\\q1_1920_financial_db_test.xlsx')

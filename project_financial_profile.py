@@ -1,18 +1,8 @@
 '''
 Programme that creates financial cost profile for individual projects. Follow instructions below.
 
-Input:
-1) three quarters worth of data
-
-Output:
-2) excel graph for each project.
-
-Notes: this code works but is old and could do with some refactoring/updating when I have a chance to get around to it.
-
-Have been testing and amending code/master keys to ensure income data comes through. Should be ok, but further tests
-required with Q1 1920 data
+Recently modified so that the three different cost profiles calculated are i) latest, ii) last, iii) baseline.
 '''
-
 
 from openpyxl import Workbook
 from bcompiler.utils import project_data_from_master
@@ -20,7 +10,81 @@ from openpyxl.chart import LineChart, Reference
 from openpyxl.chart.text import RichText
 from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
 
-def financial_dict(name_list, master_data, cells_to_capture):
+''' One of key functions used for calculating which quarter to baseline data from...
+Function returns a dictionary structured in the following way project name[('latest quarter info', 'latest bc'), 
+('last quarter info', 'last bc'), ('last baseline quarter info', 'last baseline bc'), ('oldest quarter info', 
+'oldest bc')] depending on the amount information available in the data. Only the first three key values are returned, 
+to ensure consistency (which is helpful later).'''
+def bc_ref_stages(proj_list, q_masters_dict_list):
+
+    output_dict = {}
+
+    for name in proj_list:
+        #print(name)
+        all_list = []      # format [('quarter info': 'bc')] across all masters including project
+        bl_list = []        # format ['bc', 'bc'] across all masters. bl_list_2 removes duplicates
+        ref_list = []       # format as for all list but only contains the three tuples of interest
+        for master in q_masters_dict_list:
+            try:
+                bc_stage = master[name]['BICC approval point']
+                quarter = master[name]['Reporting period (GMPP - Snapshot Date)']
+                tuple = (quarter, bc_stage)
+                all_list.append(tuple)
+            except KeyError:
+                pass
+
+        for i in range(0, len(all_list)):
+            bl_list.append(all_list[i][1])
+
+        '''below lines of text from stackoverflow. Question, remove duplicates in python list while 
+        preserving order'''
+        seen = set()
+        seen_add = seen.add
+        bl_list_2 = [x for x in bl_list if not (x in seen or seen_add(x))]
+
+        ref_list.insert(0, all_list[0])     # puts the latest info into the list first
+
+        try:
+            ref_list.insert(1, all_list[1])    # puts that last info into the list
+        except IndexError:
+            ref_list.insert(1, all_list[0])
+
+        if len(bl_list_2) == 1:                     # puts oldest info into list (as basline if no baseline)
+            ref_list.insert(2, all_list[-1])
+        else:
+            for i in range(0, len(all_list)):      # puts in baseline
+                if all_list[i][1] == bl_list[0]:
+                    ref_list.insert(2, all_list[i])
+
+        '''there is a hack here i.e. returning only first three in ref_list. There's a bug which I don't fully 
+        understand, but this solution is hopefully good enough for now'''
+        output_dict[name] = ref_list[0:3]
+
+    return output_dict
+
+'''Another key function used for calcualting which quarter to baseline data from...
+Fuction returns a dictionay structured in the following way project_name[n,n,n]. The n (number) values denote where 
+the relevant quarter master dictionary is positions in the list of master dictionaries'''
+def get_master_baseline_dict(proj_list, q_masters_dict_list, baseline_dict_list):
+    output_dict = {}
+
+    for name in proj_list:
+        master_q_list = []
+        for key in baseline_dict_list[name]:
+            for x, master in enumerate(q_masters_dict_list):
+                try:
+                    quarter = master[name]['Reporting period (GMPP - Snapshot Date)']
+                    if quarter == key[0]:
+                        master_q_list.append(x)
+                except KeyError:
+                    pass
+
+        output_dict[name] = master_q_list
+
+    return output_dict
+
+
+def financial_dict(proj_list, q_masters_dict_list, q_masters_list, cells_to_capture, index):
     '''
     the creation of a mini dictionary containing financial information. This is done via two functions; this one
     and the one title financial_info ( directly below ).
@@ -31,9 +95,10 @@ def financial_dict(name_list, master_data, cells_to_capture):
     '''
 
     output_dict = {}
-    for name in name_list:
-        get_dict_info = financial_info(name, master_data, cells_to_capture)
-        output_dict[name] = get_dict_info
+    for proj_name in proj_list:
+        master_data = q_masters_dict_list[q_masters_list[proj_name][index]]
+        get_dict_info = financial_info(proj_name, master_data, cells_to_capture)
+        output_dict[proj_name] = get_dict_info
 
     return output_dict
 
@@ -161,7 +226,7 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
 
     '''labeling data in table'''
 
-    labeling_list_quarter = ['One year ago', 'Last Quarter', 'Latest quarter']
+    labeling_list_quarter = ['Baseline', 'Last Quarter', 'Latest quarter']
 
     ws.cell(row=1, column=2, value=labeling_list_quarter[0])
     ws.cell(row=1, column=6, value=labeling_list_quarter[1])
@@ -289,7 +354,7 @@ def place_in_excel(name, latest_fin_data, last_fin_data, baseline_fin_data):
         cats = Reference(ws, min_col=1, min_row=33, max_row=42)
         chart.set_categories(cats)
 
-        
+
         '''
         keeping as colour coding is useful
         s1 = chart.series[0]
@@ -349,17 +414,30 @@ all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
 '''INSTRUCTIONS FOR RUNNING PROGRAMME'''
 
-''' ONE: provide file paths to master data to be used for analysis'''
+'''1) load all master quarter data files here'''
+q1_1920 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2019_wip_'
+                                   '(18_7_19).xlsx')
+q4_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2018.xlsx')
+q3_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_3_2018.xlsx')
+q2_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_2_2018.xlsx')
+q1_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2018.xlsx')
+q4_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2017.xlsx')
+q3_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_3_2017.xlsx')
+q2_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_2_2017.xlsx')
+q1_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2017.xlsx')
+q4_1617 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2016.xlsx')
+q3_1617 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_3_2016.xlsx')
 
-latest_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\'
-                                         'core data\\Hs2_NPR_Q1_1918_draft.xlsx')
-last_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx')
-yearago_q_data = project_data_from_master('C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_1_2018.xlsx')
+'''2) Include in the below list, as the variable names, those quarters to include in analysis
+NOTE - the comparison of financial totals us the 'bespoke' list consistent cost reporting (in nominal figures) was
+ only achieved in q1_1819, so it would be incorrect to compare figures beyond this'''
+list_of_dicts_all = [q1_1920 ,q4_1819, q3_1819, q2_1819, q1_1819, q4_1718, q3_1718, q2_1718, q1_1718, q4_1617, q3_1617]
+list_of_dicts_bespoke = [q1_1920, q4_1819, q3_1819, q2_1819, q1_1819]
 
-'''TWO: project name list options - this is where the group of interest is specified '''
+'''3) project name list options - this is where the group of interest is specified '''
 
 '''option 1 - all '''
-proj_names_all = list(latest_q_data.keys())
+proj_names_all = list(q1_1920.keys())
 
 '''option 2 - a group'''
 #TODO write function for filtering list of project names based on group
@@ -368,12 +446,22 @@ proj_names_group = ['East Midlands Franchise', 'Rail Franchising Programme', 'We
 '''option 3 - bespoke list of projects'''
 proj_names_bespoke = ['']
 
-'''THREE: enter variables created via options above into functions and run programme'''
-latest_financial_data = financial_dict(proj_names_all, latest_q_data, all_data_lists)
-last_financial_data = financial_dict(proj_names_all, last_q_data, all_data_lists)
-yearago_financial_data = financial_dict(proj_names_all, yearago_q_data, all_data_lists)
+'''4) Enter at the bottom of this function the file path to where outputs should be saved.'''
 
-'''FOUR: run the programme'''
-for project in proj_names_all:
-    wb = place_in_excel(project, latest_financial_data, last_financial_data, yearago_financial_data)
-    wb.save('C:\\Users\\Standalone\\Will\\Q1_1920_{}_financial_profile.xlsx'.format(project))
+def run_financials_single(proj_list, q_masters_dict_list):
+    baseline_bc = bc_ref_stages(proj_list, q_masters_dict_list)
+    q_masters_list = get_master_baseline_dict(proj_list, q_masters_dict_list, baseline_bc)
+    latest_financial_data = financial_dict(proj_names_all, q_masters_dict_list, q_masters_list, all_data_lists, 0)
+    last_financial_data = financial_dict(proj_names_all, q_masters_dict_list, q_masters_list, all_data_lists, 1)
+    baseline_financial_data = financial_dict(proj_names_all, q_masters_dict_list, q_masters_list, all_data_lists, 2)
+    for proj_name in proj_list:
+        wb = place_in_excel(proj_name, latest_financial_data, last_financial_data, baseline_financial_data)
+        wb.save('C:\\Users\\Standalone\\general\\Q1_1920_{}_financial_profile.xlsx'.format(proj_name))
+
+
+'''5) run the programme placing in the relevant variables. 
+the function is structured as run_financials_single(proj_list, q_masters_dict_list)
+i) proj_list = list of project names
+ii) q_master_dict_list = list of master dictionaries to be passed into the programme'''
+
+run_financials_single(proj_names_all, list_of_dicts_bespoke)

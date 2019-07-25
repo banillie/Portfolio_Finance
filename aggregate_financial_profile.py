@@ -18,16 +18,101 @@ from openpyxl.chart import LineChart, Reference
 from openpyxl.chart.text import RichText
 from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
 
-def year_totals(project_names_list, cells_to_capture, quarter_data_dict, remove_from_total):
+''' One of key functions used for calculating which quarter to baseline data from...
+Function returns a dictionary structured in the following way project name[('latest quarter info', 'latest bc'), 
+('last quarter info', 'last bc'), ('last baseline quarter info', 'last baseline bc'), ('oldest quarter info', 
+'oldest bc')] depending on the amount information available in the data. Only the first three key values are returned, 
+to ensure consistency (which is helpful later).'''
+def bc_ref_stages(proj_list, q_masters_dict_list):
+
+    output_dict = {}
+
+    for name in proj_list:
+        #print(name)
+        all_list = []      # format [('quarter info': 'bc')] across all masters including project
+        bl_list = []        # format ['bc', 'bc'] across all masters. bl_list_2 removes duplicates
+        ref_list = []       # format as for all list but only contains the three tuples of interest
+        for master in q_masters_dict_list:
+            try:
+                bc_stage = master[name]['BICC approval point']
+                quarter = master[name]['Reporting period (GMPP - Snapshot Date)']
+                tuple = (quarter, bc_stage)
+                all_list.append(tuple)
+            except KeyError:
+                pass
+
+        for i in range(0, len(all_list)):
+            bl_list.append(all_list[i][1])
+
+        '''below lines of text from stackoverflow. Question, remove duplicates in python list while 
+        preserving order'''
+        seen = set()
+        seen_add = seen.add
+        bl_list_2 = [x for x in bl_list if not (x in seen or seen_add(x))]
+
+        ref_list.insert(0, all_list[0])     # puts the latest info into the list first
+
+        try:
+            ref_list.insert(1, all_list[1])    # puts that last info into the list
+        except IndexError:
+            ref_list.insert(1, all_list[0])
+
+        if len(bl_list_2) == 1:                     # puts oldest info into list (as basline if no baseline)
+            ref_list.insert(2, all_list[-1])
+        else:
+            for i in range(0, len(all_list)):      # puts in baseline
+                if all_list[i][1] == bl_list[0]:
+                    ref_list.insert(2, all_list[i])
+
+        '''there is a hack here i.e. returning only first three in ref_list. There's a bug which I don't fully 
+        understand, but this solution is hopefully good enough for now'''
+        output_dict[name] = ref_list[0:3]
+
+    return output_dict
+
+'''Another key function used for calcualting which quarter to baseline data from...
+Fuction returns a dictionay structured in the following way project_name[n,n,n]. The n (number) values denote where 
+the relevant quarter master dictionary is positions in the list of master dictionaries'''
+def get_master_baseline_dict(proj_list, q_masters_dict_list, baseline_dict_list):
+    output_dict = {}
+
+    for name in proj_list:
+        master_q_list = []
+        for key in baseline_dict_list[name]:
+            for x, master in enumerate(q_masters_dict_list):
+                try:
+                    quarter = master[name]['Reporting period (GMPP - Snapshot Date)']
+                    if quarter == key[0]:
+                        master_q_list.append(x)
+                except KeyError:
+                    pass
+
+        output_dict[name] = master_q_list
+
+    return output_dict
+
+
+def year_totals(proj_list, proj_list_remove, data_key_list, q_masters_dict_list, q_masters_list, period):
     #TODO convert output into dictionary
 
     fy_total_list = []
 
-    for key in cells_to_capture:
+    totals_proj_list = []
+    for proj_name in proj_list:
+        if proj_name not in proj_list_remove:
+            totals_proj_list.append(proj_name)
+
+    for key in data_key_list:
         thesum = 0
-        for name in project_names_list:
+        for proj_name in totals_proj_list:
             try:
-                thesum = thesum + quarter_data_dict[name][key]
+                if period == 'baseline':
+                    to_add = q_masters_dict_list[q_masters_list[proj_name][2]][proj_name][key]
+                if period == 'last':
+                    to_add = q_masters_dict_list[q_masters_list[proj_name][1]][proj_name][key]
+                if period == 'latest':
+                    to_add = q_masters_dict_list[q_masters_list[proj_name][0]][proj_name][key]
+                thesum = thesum + to_add
             except (TypeError, KeyError):
                 pass
         fy_total_list.append(thesum)
@@ -42,93 +127,92 @@ def likeforlike():
     :return: a list of projects that are in both data sets
     '''
 
-    one = list(set(latest_q_data) - set(other_q_data))
-    two = list(set(other_q_data) - set(latest_q_data))
+    one = list(set(q1_1920) - set(q4_1819))
+    two = list(set(q4_1819) - set(q1_1920))
 
     output_list = one + two
 
     return output_list
 
-def place_in_excel(quarter_data_dict, totals_list, cells_to_capture):
-    '''
-    function places all data into a new workbook.
-    :param fin_data: dictionary of project costs created via financial info
-    :param totals: list of total costs for each year
-    :param cells_to_capture: lists of keys of interest
-    :return: excle workbook
-    '''
-
+def place_in_excel(proj_list, data_key_list, total_data, q_masters_dict_list, q_masters_list, period):
     wb = Workbook()
     ws = wb.active
 
     ws.cell(row=1, column=1).value = 'Project'
-    for i, name in enumerate(quarter_data_dict.keys()):
+    for i, proj_name in enumerate(proj_list):
         '''lists project names in row one'''
-        ws.cell(row=1, column=i + 2).value = name
+        ws.cell(row=1, column=i + 2).value = proj_name
 
         '''iterates through financial dictionary - placing financial data in ws'''
-        for x, key in enumerate(cells_to_capture):
+        for x, key in enumerate(data_key_list):
             try:
-                ws.cell(row=x+2, column=i+2).value = quarter_data_dict[name][key]
+                if period == 'baseline':
+                    ws.cell(row=x+2, column=i+2).value = q_masters_dict_list[q_masters_list[proj_name][2]][proj_name][key]
+                if period == 'last':
+                    ws.cell(row=x + 2, column=i + 2).value = \
+                    q_masters_dict_list[q_masters_list[proj_name][1]][proj_name][key]
+                if period == 'latest':
+                    ws.cell(row=x + 2, column=i + 2).value = \
+                    q_masters_dict_list[q_masters_list[proj_name][0]][proj_name][key]
             except KeyError:
                 ws.cell(row=x + 2, column=i + 2).value = 0
 
     '''places totals in final column. to note because this is a list and not a dictionary as for fin_data there is 
     possibility that data could become unaligned. Whether changing the list of cells_to_capture causes them to become
     unaligned needs to be tested'''
-    ws.cell(row=1, column=len(quarter_data_dict.keys()) + 2).value = 'Total'
-    for i, values in enumerate(totals_list):
-        ws.cell(row=i + 2, column=len(quarter_data_dict.keys())+2).value = values
+    ws.cell(row=1, column=len(proj_list) + 2).value = 'Total'
+    for i, values in enumerate(total_data):
+        ws.cell(row=i + 2, column=len(proj_list)+2).value = values
 
     '''places keys into the chart in the first column'''
-    for i, key in enumerate(cells_to_capture):
+    for i, key in enumerate(data_key_list):
         ws.cell(row=i+2, column=1).value = key
 
     '''information on which projects are not included in totals'''
-    ws.cell(row=1, column=len(quarter_data_dict.keys()) + 4).value = 'Projects that have been removed to avoid double counting'
+    ws.cell(row=1, column=len(proj_list) + 4).value = 'Projects that have been removed to avoid double counting'
     for i, project in enumerate(dont_double_count):
-        ws.cell(row=i + 2, column=len(quarter_data_dict.keys()) + 4).value = project
+        ws.cell(row=i + 2, column=len(proj_list) + 4).value = project
 
-    ws.cell(row=1, column=len(quarter_data_dict.keys())+6).value = 'Projects that have been removed to enable like for like' \
-                                                          'comparison of totals'
-    for i, project in enumerate(like_for_like_totals):
-        ws.cell(row=i + 2, column=len(quarter_data_dict.keys())+6).value = project
+    # ws.cell(row=1, column=len(proj_list)+6).value = 'Projects that have been removed to enable like for like' \
+    #                                                       'comparison of totals'
+    # for i, project in enumerate(like_for_like_totals):
+    #     ws.cell(row=i + 2, column=len(proj_list)+6).value = project
 
     '''data for overall chart. As above because this data is in a list - possibility of it being unaligned needs 
     testing. not the best way of managing data flow, but working for now'''
-    start_row = len(totals_list) + 8
-    for x in range(0, int(len(totals_list) / 4)):
-        ws.cell(row=start_row, column=2, value=totals_list[x])
+    start_row = len(total_data) + 8
+    for x in range(0, int(len(total_data) / 4)):
+        ws.cell(row=start_row, column=2, value=total_data[x])
         start_row += 1
 
-    start_row = len(totals_list) + 8
-    for x in range(int(len(totals_list) / 4), (int(len(totals_list) / 4) * 2)):
-        ws.cell(row=start_row, column=3, value=totals_list[x])
+    start_row = len(total_data) + 8
+    for x in range(int(len(total_data) / 4), (int(len(total_data) / 4) * 2)):
+        ws.cell(row=start_row, column=3, value=total_data[x])
         start_row += 1
 
-    start_row = len(totals_list) + 8
-    for x in range((int(len(totals_list) / 4) * 2), (int(len(totals_list) / 4) * 3)):
-        ws.cell(row=start_row, column=4, value=totals_list[x])
+    start_row = len(total_data) + 8
+    for x in range((int(len(total_data) / 4) * 2), (int(len(total_data) / 4) * 3)):
+        ws.cell(row=start_row, column=4, value=total_data[x])
         start_row += 1
 
-    start_row = len(totals_list) + 8
-    for x in range((int(len(totals_list) / 4) * 3), int(len(totals_list))):
-        ws.cell(row=start_row, column=5, value=totals_list[x])
+    start_row = len(total_data) + 8
+    for x in range((int(len(total_data) / 4) * 3), int(len(total_data))):
+        ws.cell(row=start_row, column=5, value=total_data[x])
         start_row += 1
 
     '''code was essentially a hack'''
 
-    start_row = len(totals_list) + 8
+    start_row = len(total_data) + 8
     list_of_numbers = [0, len(capture_rdel), len(capture_rdel)*2]
     total_sum = 0
     for i in range(0, len(capture_rdel)):
         for x in list_of_numbers:
-            total_sum = total_sum + totals_list[x + i]
+            total_sum = total_sum + total_data[x + i]
             ws.cell(row=start_row, column=6, value=total_sum)
         start_row += 1
         total_sum = 0
 
-    a = len(totals_list) + 7
+    a = len(total_data) + 7
     ws.cell(row=a, column=2, value='RDEL')
     ws.cell(row=a, column=3, value='CDEL')
     ws.cell(row=a, column=4, value='Non-Gov')
@@ -195,6 +279,14 @@ def place_in_excel(quarter_data_dict, totals_list, cells_to_capture):
 
     return wb
 
+def run_financials_all(proj_list, proj_list_remove, data_key_list, q_masters_dict_list, period):
+    baseline_bc = bc_ref_stages(proj_list, q_masters_dict_list)
+    q_masters_list = get_master_baseline_dict(proj_list, q_masters_dict_list, baseline_bc)
+    total_data = year_totals(proj_list, proj_list_remove, data_key_list, q_masters_dict_list, q_masters_list, period)
+    output = place_in_excel(proj_list, data_key_list, total_data, q_masters_dict_list, q_masters_list, period)
+
+    return output
+
 '''List of financial data keys to capture. This should be amended to years of interest'''
 capture_rdel = ['19-20 RDEL Forecast Total', '20-21 RDEL Forecast Total', '21-22 RDEL Forecast Total',
                 '22-23 RDEL Forecast Total', '23-24 RDEL Forecast Total', '24-25 RDEL Forecast Total',
@@ -218,53 +310,60 @@ all_data_lists = capture_rdel + capture_cdel + capture_ng + capture_income
 
 '''INSTRUCTION FOR RUNNING PROGRAMME'''
 
-'''1) Provide paths to master data sets. Note the second master date set is only used to produce a list of projects
-for like for like comparison.'''
+'''1) load all master quarter data files here'''
+q1_1920 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2019_wip_'
+                                   '(18_7_19).xlsx')
+q4_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2018.xlsx')
+q3_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_3_2018.xlsx')
+q2_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_2_2018.xlsx')
+q1_1819 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2018.xlsx')
+q4_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2017.xlsx')
+q3_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_3_2017.xlsx')
+q2_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_2_2017.xlsx')
+q1_1718 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2017.xlsx')
+q4_1617 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2016.xlsx')
+q3_1617 = project_data_from_master('C:\\Users\\Standalone\\general\\masters folder\\core data\\master_3_2016.xlsx')
 
-latest_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
-other_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3"
-                                 "_2018.xlsx")
+'''2) Include in the below list, as the variable names, those quarters to include in analysis
+NOTE - the comparison of financial totals us the 'bespoke' list consistent cost reporting (in nominal figures) was
+ only achieved in q1_1819, so it would be incorrect to compare figures beyond this'''
+list_of_dicts_all = [q1_1920 ,q4_1819, q3_1819, q2_1819, q1_1819, q4_1718, q3_1718, q2_1718, q1_1718, q4_1617, q3_1617]
+list_of_dicts_bespoke = [q1_1920, q4_1819, q3_1819, q2_1819, q1_1819]
 
-''' 2) Choose appropriate project name list options - this is where the group of interest for the aggregate chart is 
+''' 3) Choose appropriate project name list options - this is where the group of interest for the aggregate chart is 
 specified. '''
-
 '''option 1 - all '''
-proj_names_all = list(latest_q_data.keys())
-
+proj_names_all = list(q1_1920.keys())
 '''option 2 - a group'''
-#TODO write function for filtering list of project names based on group
 proj_names_group = ['East Midlands Franchise', 'Rail Franchising Programme', 'West Coast Partnership Franchise']
-
 '''option 3 - bespoke list of projects'''
 proj_names_bespoke = ['Digital Railway']
 
-'''3) It is important to consider the list of projects that should included within financial totals of each year. There 
-are two key things to consider 1) whether project cost profiles should be removed to prevent double counting, 2) 
-whether you would like to have a like for like comparison between chosen quarters i.e. compare change in cost profile 
-for the same set of projects. 
+'''4) It is important to consider the list of projects that should included within financial totals of each year. There 
+are two key things to consider:
+i) whether some project cost profiles should be removed to prevent double counting, 
+ii) whether you would like to have a like for like comparison between chosen quarters i.e. compare change in cost profile 
+for the same set of projects. If you are going to compare project financial against baselines then this is not necessary
+as the baseline position will represent the when each project joined the portfolio. So you are in fact comparing like for
+like.'''
 
-The options below therefore enable the user to handle these options. '''
-
-'''option one - just remove projects to stop double counting'''
+'''option one - remove projects to stop double counting'''
 dont_double_count = ['HS2 Phase 2b', 'HS2 Phase1', 'HS2 Phase2a', 'East Midlands Franchise',
                      'South Eastern Rail Franchise Competition', 'West Coast Partnership Franchise']
 
-'''option two - ensure that only like for like comparision of totals.'''
-like_for_like_totals = dont_double_count + likeforlike()
+'''option two - ensure that only like for like comparision of totals. see point above'''
+#like_for_like_totals = dont_double_count + likeforlike()
 
-'''4) enter variables created via options above into functions and run programme'''
+'''5) enter variables created via options above into function and run programme. 
+the function is structured as follows... run_financials_all(proj_list, proj_list_remove, data_key_list, q_masters_dict_list)
 
-'''step one, run the year_totals function to get year totals. 
-variables to be placed in this order: 
-(project_names_list, cells_to_capture, quarter_data_dict, remove_from_total)
-'''
-total_data = year_totals(proj_names_all, all_data_lists, latest_q_data, like_for_like_totals)
+1) proj_list = list of projects to include in analysis. 
+2) proj_list_remove = list of projects to not be included in total figures. 
+3) data_key_list = the list of financial keys. 
+4) q_masters_dict_list = the list of master dictionaries to include in analysis. 
+5) period = which financial information you want to return. options are 'baseline', 'last', 'latest' '''
 
-'''step two, run the place data_in_excel function to place data in output document.
-Variables to be placed in this order:
-(quarter_data_dict, totals_list, cells_to_capture)'''
-output = place_in_excel(latest_q_data, total_data, all_data_lists)
+output = run_financials_all(proj_names_all, dont_double_count, all_data_lists, list_of_dicts_bespoke, 'baseline')
 
 '''5) specify where to save to output file - excel spreadsheet with graph'''
-
-output.save("C:\\Users\\Standalone\\Will\\Q1_1920_financial_profile_testing.xlsx")
+output.save("C:\\Users\\Standalone\\general\\Q1_1920_financial_profile_baseline_no_hs2.xlsx")

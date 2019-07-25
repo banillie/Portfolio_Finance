@@ -3,6 +3,9 @@ Programme to compare a specific year or total wlc information. It produces a wb 
 only i.e. no graph. The output shows changes to wlc in relation 1) overall figures, 2) change between quarters,
 3) percent change are highlighted in red if change is greater/less than £100m/-£100m or percentage change greater/less
 than 5%/-5% of project value
+
+It is from the data placed into the output document that a simple bard chart can be built to show the most significant
+changes in cost since the previous quarter.
 '''
 
 from bcompiler.utils import project_data_from_master
@@ -85,29 +88,35 @@ red_text = Font(color="FF0000")
 '''INSTRUCTIONS FOR RUNNING PROGRAMME'''
 
 '''1) specify file paths to where master data for analysis is stored.'''
-latest_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_4_2018.xlsx")
-other_q_data = project_data_from_master("C:\\Users\\Standalone\\Will\\masters folder\\core data\\master_3_2018.xlsx")
+latest_q_data = project_data_from_master("C:\\Users\\Standalone\\general\\masters folder\\core data\\master_1_2019"
+                                         "_wip_(18_7_19).xlsx")
+other_q_data = project_data_from_master("C:\\Users\\Standalone\\general\\masters folder\\core data\\master_4_2018.xlsx")
 
 '''2) decide which output you require'''
 
-'''option one - in year financial information'''
 '''in year cost lists is chosen through the cost list. No not change.'''
 cost_list = [' RDEL Forecast Total', ' CDEL Forecast Total', ' Forecast Non-Gov']
+
+'''OPTION ONE - for comparing in year costs'''
 '''in year income list is chosen through the income list. No not change.'''
 income_list = [' Forecast - Income both Revenue and Capital']
-'''chose financial year of interest. change accordingly'''
+
+'''chose financial year of interest. change accordingly. needs to be in format of YY-YY'''
 year_interest = '19-20'
 
 '''get fy information by entering the appropriate variables'''
 one_fy = get_yearly_costs(latest_q_data, cost_list, year_interest)
 two_fy = get_yearly_costs(other_q_data, cost_list, year_interest)
 
-'''option two - for wlc costs'''
-'''chose wlc cost key of interest'''
-wlc_key = 'Total Forecast - Income both Revenue and Capital'
+'''OPTION TWO - for wlc costs'''
+
+'''chose wlc cost key of interest from master data. Get information by entering appropriate variables below'''
+wlc_key = 'Total Forecast'
 one_wlc = get_wlc(latest_q_data, wlc_key)
 two_wlc = get_wlc(other_q_data, wlc_key)
 
-'''enter desired variables into the compare function and specify file path for where output document to be saved'''
+'''3) enter desired variables into the compare function i.e. enter either one_fy, two_fy or one_wlc, two_wlc and 
+specify file path for where output document to be saved'''
 output = compare(one_wlc, two_wlc)
-output.save("C:\\Users\\Standalone\\Will\\total_income_Q4_1819_data.xlsx")
+
+output.save("C:\\Users\\Standalone\\general\\Q1_1920_wlc_comparison.xlsx")
